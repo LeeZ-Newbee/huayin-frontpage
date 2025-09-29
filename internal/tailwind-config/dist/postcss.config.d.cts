@@ -1,0 +1,2 @@
+export * from "/Users/zhichao.zhang/vue-vben-admin/internal/tailwind-config/src/postcss.config.js";
+export { default } from "/Users/zhichao.zhang/vue-vben-admin/internal/tailwind-config/src/postcss.config.js";
