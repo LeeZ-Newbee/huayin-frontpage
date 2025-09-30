@@ -1,71 +1,102 @@
 <script lang="ts" setup>
-import type { VxeGridProps } from '#/adapter/vxe-table';
+import type { NewUserInfo } from '#/api/type/user';
 
-import { Page } from '@vben/common-ui';
+import { computed, h, onMounted, ref } from 'vue';
 
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getExampleTableApi } from '#/api';
+import { confirm, Page, useVbenModal } from '@vben/common-ui';
+import { useRefresh } from '@vben/hooks';
 
-interface RowType {
-  category: string;
-  color: string;
-  id: string;
-  price: string;
-  productName: string;
-  releaseDate: string;
-}
+import { Button, message, Table } from 'ant-design-vue';
 
-// 数据实例
-// const MOCK_TREE_TABLE_DATA = [
-//   {
-//     date: '2020-08-01',
-//     id: 10_000,
-//     name: 'Test1',
-//     parentId: null,
-//     size: 1024,
-//     type: 'mp3',
-//   },
-// ]
+import { deleteUserByName, getAllUsers } from '#/api';
+import { Role } from '#/api/type/user';
 
-const gridOptions: VxeGridProps<RowType> = {
-  checkboxConfig: {
-    highlight: true,
-    labelField: 'name',
-  },
-  columns: [
-    { title: '序号', type: 'seq', width: 50 },
-    { field: 'name', title: '用户名' },
-    { field: 'role', title: '用户角色' },
-  ],
-  exportConfig: {},
-  // height: 'auto', // 如果设置为 auto，则必须确保存在父节点且不允许存在相邻元素，否则会出现高度闪动问题
-  keepSource: true,
-  proxyConfig: {
-    ajax: {
-      query: async ({ page }) => {
-        return await getExampleTableApi({
-          page: page.currentPage,
-          pageSize: page.pageSize,
-        });
-      },
+import AddUserDialog from '../add/add-user-dialog.vue';
+
+const { refresh } = useRefresh();
+
+const [AddUserModal, formModalApi] = useVbenModal({
+  connectedComponent: AddUserDialog,
+});
+
+const userListColumns = [
+  { title: '用户名', dataIndex: 'name', key: 'name' },
+  { title: '角色', dataIndex: 'role', key: 'role' },
+  {
+    title: '操作',
+    key: 'action',
+    customRender: ({ record }: any) => {
+      return h('div', [
+        h(
+          Button,
+          {
+            type: 'primary',
+            size: 'small',
+            onClick: () => handleDelete(record),
+          },
+          () => '删除',
+        ),
+      ]);
     },
   },
-  toolbarConfig: {
-    custom: false,
-    export: false,
-    // import: true,
-    refresh: false,
-    zoom: false,
-  },
-};
+];
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions,
+// 删除用户
+function handleDelete(user: any) {
+  confirm('确定删除该用户么？').then(() => {
+    deleteUser(user);
+  });
+}
+
+async function deleteUser(user: any) {
+  const deleteResult = await deleteUserByName(user.name);
+  if (deleteResult) {
+    message.success('删除成功');
+    // 刷新当前页面
+    refresh();
+  }
+}
+
+const userList = ref<NewUserInfo[]>([]);
+
+// 对数据二次处理，格式化时间
+const processedUserList = computed(() => {
+  return (
+    userList.value
+      // 格式化时间戳
+      .map((item) => ({
+        ...item,
+        role: item.role === Role.Manager ? '管理员' : '导演',
+      }))
+  );
+});
+
+// 查询所有用户
+async function queryUserList() {
+  const queryResult = await getAllUsers();
+  if (queryResult) {
+    userList.value = queryResult.users;
+  }
+}
+
+// 添加新用户
+function addNewUser() {
+  formModalApi.open();
+}
+
+onMounted(() => {
+  queryUserList();
 });
 </script>
 
 <template>
-  <Page description="所有用户列表" title="用户管理" auto-content-height>
-    <Grid />
+  <Page auto-content-height>
+    <AddUserModal />
+    <Button type="primary" @click="addNewUser">新增用户</Button>
+    <Table
+      :data-source="processedUserList"
+      :columns="userListColumns"
+      :pagination="false"
+    />
   </Page>
 </template>

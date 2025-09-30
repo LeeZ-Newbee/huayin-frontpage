@@ -10,6 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { defineStore } from 'pinia';
 
 import { getUserInfoApi, loginApi, logoutApi } from '#/api';
+import { Role } from '#/api/type/user';
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
@@ -34,15 +35,17 @@ export const useAuthStore = defineStore('auth', () => {
       const { role } = await loginApi(params);
       if (role) {
         const accessToken = 'test_token';
+        const roleName = role === Role.Manager ? 'admin' : 'director';
         const userInfo: UserInfo = {
           username: params.name,
           role,
           avatar:
             'https://b0.bdstatic.com/ugc/XhisrD-9wE9pFFNLorwRQQb17175b744114bbeee44b6127da0efe9.jpg',
           token: accessToken,
-          desc: '管理员用户',
+          desc: roleName,
           homePath: '',
           realName: params.name,
+          roles: [roleName],
           userId: '',
         };
         accessStore.setAccessToken(accessToken);

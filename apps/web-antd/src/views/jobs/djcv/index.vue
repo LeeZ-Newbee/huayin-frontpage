@@ -6,11 +6,12 @@ import type { PersonInfo } from '#/api/type/person';
 
 import { computed, onMounted, reactive, ref } from 'vue';
 
-import { VbenAvatar, VbenCheckButtonGroup } from '@vben/common-ui';
+import { VbenCheckButtonGroup } from '@vben/common-ui';
 
 import {
   Button,
   Card,
+  Image,
   Input,
   message,
   Rate,
@@ -46,6 +47,11 @@ let currentBatchStartIndex = 0;
 const presetGender = GenderOptions;
 const gender = ref<Gender | undefined>(presetGender[0]?.value);
 
+// 性别切换
+function onGenderChange() {
+  persionSearchInfo.tagId = filterTagOptions.value[0]?.value;
+}
+
 // 标签显示列表
 const filterTagOptions = computed(() => {
   const tagOptions =
@@ -77,13 +83,13 @@ const persionSearchInfo = reactive<PersonSearchInfo>({
 
 // 开始选角
 async function searchMediaDemo() {
-  if (
-    persionSearchInfo.avatarName === undefined ||
-    persionSearchInfo.avatarName.length === 0
-  ) {
-    message.warning('艺名不能为空');
-    return;
-  }
+  // if (
+  //   persionSearchInfo.avatarName === undefined ||
+  //   persionSearchInfo.avatarName.length === 0
+  // ) {
+  //   message.warning('艺名不能为空');
+  //   return;
+  // }
   if (persionSearchInfo.priceHigh <= persionSearchInfo.priceLow) {
     message.warning('最高价格不能小于最低价格');
     return;
@@ -160,18 +166,30 @@ onMounted(() => {
       <div class="flex flex-col gap-4">
         <Card v-for="person in latestPersionsResult" :key="person.artistId">
           <div class="flex items-center gap-1">
-            <VbenAvatar :src="SERVER_DOMAIN + person.avatar" :size="60" />
+            <Image
+              :src="SERVER_DOMAIN + person.avatar"
+              height="60px"
+              width="60px"
+            />
             <div class="flex flex-col gap-1" style="min-width: 200px">
               <span class="text-lg font-medium">{{ person.nickName }}</span>
-              <div class="border-b border-gray-200"></div>
               <div class="flex items-center gap-1">
-                <Button v-if="person.recommendWord1?.length > 0">
+                <Button
+                  v-if="person.recommendWord1?.length > 0"
+                  style="pointer-events: none; cursor: default"
+                >
                   {{ person.recommendWord1 }}
                 </Button>
-                <Button v-if="person.recommendWord2?.length > 0">
+                <Button
+                  v-if="person.recommendWord2?.length > 0"
+                  style="pointer-events: none; cursor: default"
+                >
                   {{ person.recommendWord2 }}
                 </Button>
-                <Button v-if="person.recommendWord3?.length > 0">
+                <Button
+                  v-if="person.recommendWord3?.length > 0"
+                  style="pointer-events: none; cursor: default"
+                >
                   {{ person.recommendWord3 }}
                 </Button>
               </div>
@@ -188,13 +206,21 @@ onMounted(() => {
       <div class="flex flex-col gap-4">
         <Card v-for="person in oldPersionsResult" :key="person.artistId">
           <div class="flex items-center gap-1">
-            <VbenAvatar :src="SERVER_DOMAIN + person.avatar" :size="60" />
+            <Image
+              :src="SERVER_DOMAIN + person.avatar"
+              height="60px"
+              width="60px"
+            />
             <div class="flex flex-col gap-1" style="min-width: 200px">
               <span class="text-lg font-medium">{{ person.nickName }}</span>
-              <div class="border-b border-gray-200"></div>
               <div class="flex items-center gap-1">
-                <Rate :value="person.score" :count="5" :allow-half="true" />
-                <span>{{ person.score }}分</span>
+                <Rate
+                  :allow-half="true"
+                  :value="Math.floor(person.score) / 2"
+                  :count="5"
+                  :disabled="true"
+                />
+                <span>{{ Math.floor(person.score) }}分</span>
               </div>
             </div>
           </div>
@@ -207,7 +233,9 @@ onMounted(() => {
       </template>
       <div class="flex w-full flex-col gap-2">
         <div class="flex gap-1">
-          <Button type="text">艺人名:</Button>
+          <Button type="text" style="pointer-events: none; cursor: default">
+            艺名:
+          </Button>
           <Input
             v-model:value="persionSearchInfo.avatarName"
             type="text"
@@ -218,8 +246,14 @@ onMounted(() => {
         </div>
 
         <div class="flex gap-1">
-          <Button type="text">性别:</Button>
-          <Select v-model:value="gender" style="width: 100px">
+          <Button type="text" style="pointer-events: none; cursor: default">
+            性别:
+          </Button>
+          <Select
+            v-model:value="gender"
+            style="width: 100px"
+            @change="onGenderChange"
+          >
             <Select.Option
               :value="preset.value"
               v-for="preset in presetGender"
@@ -231,7 +265,9 @@ onMounted(() => {
         </div>
 
         <div class="flex gap-4">
-          <Button type="text">价格:</Button>
+          <Button type="text" style="pointer-events: none; cursor: default">
+            价格:
+          </Button>
           <Slider
             v-model:value="persionSearchInfo.priceLow"
             :max="500"
@@ -249,7 +285,9 @@ onMounted(() => {
           <span>{{ persionSearchInfo.priceHigh }}</span>
         </div>
         <div class="flex gap-4">
-          <Button type="text">标签:</Button>
+          <Button type="text" style="pointer-events: none; cursor: default">
+            标签:
+          </Button>
 
           <VbenCheckButtonGroup
             v-model="persionSearchInfo.tagId"

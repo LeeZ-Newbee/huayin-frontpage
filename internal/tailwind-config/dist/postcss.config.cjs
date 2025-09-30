@@ -3,7 +3,7 @@ const { createJiti } = require("../../../node_modules/.pnpm/jiti@2.5.1/node_modu
 const jiti = createJiti(__filename, {
   "interopDefault": true,
   "alias": {
-    "@vben/tailwind-config": "/Users/zhichao.zhang/vue-vben-admin/internal/tailwind-config"
+    "@vben/tailwind-config": "/Users/zhichao.zhang/huayin-person-manager/internal/tailwind-config"
   },
   "transformOptions": {
     "babel": {
@@ -12,5 +12,5 @@ const jiti = createJiti(__filename, {
   }
 })
 
-/** @type {import("/Users/zhichao.zhang/vue-vben-admin/internal/tailwind-config/src/postcss.config.js")} */
-module.exports = jiti("/Users/zhichao.zhang/vue-vben-admin/internal/tailwind-config/src/postcss.config.ts")
+/** @type {import("/Users/zhichao.zhang/huayin-person-manager/internal/tailwind-config/src/postcss.config.js")} */
+module.exports = jiti("/Users/zhichao.zhang/huayin-person-manager/internal/tailwind-config/src/postcss.config.ts")

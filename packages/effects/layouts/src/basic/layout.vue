@@ -249,14 +249,14 @@ const headerSlots = computed(() => {
         updatePreferences({ sidebar: { extraCollapse: value } })
     "
   >
-    <!-- logo -->
+    <!-- logo首页图标 -->
     <template #logo>
       <VbenLogo
         v-if="preferences.logo.enable"
         :fit="preferences.logo.fit"
         :class="logoClass"
         :collapsed="logoCollapsed"
-        :src="preferences.logo.source"
+        src="/favicon.ico"
         :text="preferences.app.name"
         :theme="showHeaderNav ? headerTheme : theme"
         @click="clickLogo"

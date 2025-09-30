@@ -72,7 +72,7 @@ const routes: RouteRecordRaw[] = [
     meta: {
       icon: 'mdi:draw-pen',
       order: 6,
-      title: '话本',
+      title: '画本',
     },
     name: 'Jobs-hb',
     path: '/jobs/hb',

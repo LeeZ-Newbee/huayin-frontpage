@@ -6,9 +6,17 @@ import type { PersonInfo } from '#/api/type/person';
 
 import { onMounted, reactive, ref } from 'vue';
 
-import { VbenAvatar, VbenCheckButtonGroup } from '@vben/common-ui';
+import { VbenCheckButtonGroup } from '@vben/common-ui';
 
-import { Button, Card, Input, message, Rate, Slider } from 'ant-design-vue';
+import {
+  Button,
+  Card,
+  Image,
+  Input,
+  message,
+  Rate,
+  Slider,
+} from 'ant-design-vue';
 
 import { latestPersions, oldPersions, searchMediaDemos } from '#/api';
 import { SERVER_DOMAIN } from '#/api/type/constants';
@@ -55,13 +63,13 @@ const persionSearchInfo = reactive<PersonSearchInfo>({
 
 // 开始选角
 async function searchMediaDemo() {
-  if (
-    persionSearchInfo.avatarName === undefined ||
-    persionSearchInfo.avatarName.length === 0
-  ) {
-    message.warning('艺名不能为空');
-    return;
-  }
+  // if (
+  //   persionSearchInfo.avatarName === undefined ||
+  //   persionSearchInfo.avatarName.length === 0
+  // ) {
+  //   message.warning('艺名不能为空');
+  //   return;
+  // }
   if (persionSearchInfo.priceHigh <= persionSearchInfo.priceLow) {
     message.warning('最高价格不能小于最低价格');
     return;
@@ -77,146 +85,6 @@ async function searchMediaDemo() {
 // 查询新人榜
 async function queryLatestPersons() {
   const queryResult = await latestPersions(JobType.pszb);
-  // const queryResult: PersonInfo[] = [
-  //   {
-  //     artistId: 1,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: undefined,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 2,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: undefined,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 3,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: undefined,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 4,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: undefined,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 5,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: undefined,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 6,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: undefined,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  // ];
   console.warn(`新人榜${queryResult}`);
   latestPersionsResult.value = queryResult;
 }
@@ -224,146 +92,6 @@ async function queryLatestPersons() {
 // 查询老人榜 uploads/1759061627093_files.jpeg
 async function queryOldPersons() {
   const queryResult = await oldPersions(JobType.pszb);
-  // const queryResult: PersonInfo[] = [
-  //   {
-  //     artistId: 1,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: '/uploads/1759070066412_files.jpg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: 1,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 2,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: '/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: 0.5,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 3,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: '/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: 3.5,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 4,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: 4,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 5,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: 4.5,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  //   {
-  //     artistId: 6,
-  //     nickName: '昵称',
-  //     name: '真名',
-  //     avatar: 'http://82.156.25.199:5001/uploads/1759061627093_files.jpeg',
-  //     recommendWord1: '嗓音性感',
-  //     recommendWord2: '交银及时',
-  //     recommendWord3: '质量高',
-  //     job: JobType.pszb,
-  //     address: '',
-  //     qq: '',
-  //     wechat: '',
-  //     telephone: '',
-  //     emergencyTelphone: '',
-  //     creditCardNum: '',
-  //     ID: '',
-  //     identityCardFront: '',
-  //     identityCardReverse: '',
-  //     salary: 0,
-  //     priorityRating: 5,
-  //     createTime: undefined,
-  //     gender: 0,
-  //   },
-  // ];
   console.warn(`老人榜${queryResult}`);
   oldPersionsResult.value = queryResult;
 }
@@ -398,7 +126,11 @@ function changeBatch() {
 }
 
 // 查看艺人详情
-function checkPersonDetail(artistId: number) {
+function checkPersonDetail(artistId: number | undefined) {
+  if (!artistId) {
+    console.error('艺人id为空');
+    return;
+  }
   router.push({ name: 'PersonDetail', params: { artistId } });
 }
 
@@ -418,18 +150,30 @@ onMounted(() => {
       <div class="flex flex-col gap-4">
         <Card v-for="person in latestPersionsResult" :key="person.artistId">
           <div class="flex items-center gap-1">
-            <VbenAvatar :src="SERVER_DOMAIN + person.avatar" :size="60" />
+            <Image
+              :src="SERVER_DOMAIN + person.avatar"
+              height="60px"
+              width="60px"
+            />
             <div class="flex flex-col gap-1" style="min-width: 200px">
               <span class="text-lg font-medium">{{ person.nickName }}</span>
-              <div class="border-b border-gray-200"></div>
               <div class="flex items-center gap-1">
-                <Button v-if="person.recommendWord1?.length > 0">
+                <Button
+                  v-if="person.recommendWord1?.length > 0"
+                  style="pointer-events: none; cursor: default"
+                >
                   {{ person.recommendWord1 }}
                 </Button>
-                <Button v-if="person.recommendWord2?.length > 0">
+                <Button
+                  v-if="person.recommendWord2?.length > 0"
+                  style="pointer-events: none; cursor: default"
+                >
                   {{ person.recommendWord2 }}
                 </Button>
-                <Button v-if="person.recommendWord3?.length > 0">
+                <Button
+                  v-if="person.recommendWord3?.length > 0"
+                  style="pointer-events: none; cursor: default"
+                >
                   {{ person.recommendWord3 }}
                 </Button>
               </div>
@@ -446,13 +190,21 @@ onMounted(() => {
       <div class="flex flex-col gap-4">
         <Card v-for="person in oldPersionsResult" :key="person.artistId">
           <div class="flex items-center gap-1">
-            <VbenAvatar :src="SERVER_DOMAIN + person.avatar" :size="60" />
+            <Image
+              :src="SERVER_DOMAIN + person.avatar"
+              height="60px"
+              width="60px"
+            />
             <div class="flex flex-col gap-1" style="min-width: 200px">
               <span class="text-lg font-medium">{{ person.nickName }}</span>
-              <div class="border-b border-gray-200"></div>
               <div class="flex items-center gap-1">
-                <Rate allow-half :value="person.score" :count="5" />
-                <span>{{ person.score }}分</span>
+                <Rate
+                  :allow-half="true"
+                  :value="Math.floor(person.score) / 2"
+                  :count="5"
+                  :disabled="true"
+                />
+                <span>{{ Math.floor(person.score) }}分</span>
               </div>
             </div>
           </div>
@@ -467,7 +219,9 @@ onMounted(() => {
       </template>
       <div class="flex w-full flex-col gap-2">
         <div class="flex gap-1">
-          <Button type="text">艺人名:</Button>
+          <Button type="text" style="pointer-events: none; cursor: default">
+            艺名:
+          </Button>
           <Input
             v-model:value="persionSearchInfo.avatarName"
             type="text"
@@ -478,7 +232,9 @@ onMounted(() => {
         </div>
 
         <div class="flex gap-4">
-          <Button type="text">价格:</Button>
+          <Button type="text" style="pointer-events: none; cursor: default">
+            价格:
+          </Button>
           <Slider
             v-model:value="persionSearchInfo.priceLow"
             :max="500"
@@ -497,7 +253,9 @@ onMounted(() => {
           <span>{{ persionSearchInfo.priceHigh }}</span>
         </div>
         <div class="flex gap-4">
-          <Button type="text">标签:</Button>
+          <Button type="text" style="pointer-events: none; cursor: default">
+            标签:
+          </Button>
 
           <VbenCheckButtonGroup
             v-model="persionSearchInfo.tagId"

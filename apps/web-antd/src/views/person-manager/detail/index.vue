@@ -1,10 +1,14 @@
 <script lang="ts" setup>
-import { h, onMounted, ref } from 'vue';
+import type { CommentInfo } from '#/api/type/comment';
+import type { PersonInfo } from '#/api/type/person';
+
+import { computed, h, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { Card, Image, Rate, Table } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
-import { searchPersonById } from '#/api';
+import { searchCommentsByPersonId, searchPersonById } from '#/api';
 
 const route = useRoute();
 
@@ -12,66 +16,36 @@ const route = useRoute();
 const personId = Number(route.params.artistId);
 console.warn(`艺人id:${personId}`);
 
-interface Person {
-  avatar: string;
-  nickName: string;
-  qq: string;
-  ID: string;
-  name: string;
-  wechat: string;
-  salary: string;
-  creditCardNum: string;
-  telephone: string;
-  address: string;
-  emergencyTelphone: string;
-}
-
-const person = ref<Person>({
-  avatar: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/avatar-v1.webp',
-  nickName: '花名示例',
-  qq: '12345678',
-  ID: '130301199901011234',
-  name: '张三',
-  wechat: 'wechat123',
-  salary: '主播旁白200，角色350',
-  creditCardNum: '622202********1234',
-  telephone: '13800000000',
-  address: '北京市海淀区',
-  emergencyTelphone: '13900000000',
+const person = ref<PersonInfo>({
+  avatar: '',
+  nickName: '',
+  qq: '',
+  ID: '',
+  name: '',
+  wechat: '',
+  salary: 0,
+  creditCardNum: '',
+  telephone: '',
+  address: '',
+  emergencyTelphone: '',
+  artistId: undefined,
+  job: 0,
+  recommendWord1: '',
+  recommendWord2: '',
+  recommendWord3: '',
+  identityCardFront: '',
+  identityCardReverse: '',
+  priorityRating: undefined,
+  createTime: undefined,
+  gender: 0,
 });
 
-const recentCooperations = ref([
-  {
-    id: 1,
-    date: '2025年9月11日',
-    content: '《康熙大帝》旁白',
-    director: '李木子',
-    score: 3,
-    comment: '表现优秀，声音感染力强。',
-  },
-]);
+const recentCooperations = ref<CommentInfo | undefined>();
 
-const historyCooperations = ref([
-  {
-    id: 1,
-    date: '2025年8月11日',
-    content: '《大染坊》旁白',
-    director: '李木子',
-    score: 3,
-    comment: '声音醇厚，表现不错。',
-  },
-  {
-    id: 2,
-    date: '2025年6月11日',
-    content: '《雍正王朝》旁白',
-    director: '刘尔刀',
-    score: 3,
-    comment: '声音有感染力，完成度高。',
-  },
-]);
+const historyCooperations = ref<CommentInfo[]>([]);
 
 const historyColumns = [
-  { title: '日期', dataIndex: 'date', key: 'date' },
+  { title: '日期', dataIndex: 'time', key: 'time' },
   { title: '合作内容', dataIndex: 'content', key: 'content' },
   { title: '配音导演', dataIndex: 'director', key: 'director' },
   {
@@ -79,19 +53,45 @@ const historyColumns = [
     dataIndex: 'score',
     key: 'score',
     customRender: ({ text }: any) =>
-      h(Rate, { value: text, count: 5, allowHalf: true }),
+      h(Rate, { value: text, count: 5, allowHalf: true, disabled: true }),
   },
-  { title: '评价', dataIndex: 'comment', key: 'comment' },
+  { title: '评价', dataIndex: 'evaluate', key: 'evaluate', width: 500 },
 ];
+
+// 对数据二次处理，格式化时间
+const processedHistory = computed(() => {
+  return (
+    historyCooperations.value
+      // 格式化时间戳
+      .map((item) => ({
+        ...item,
+        time: dayjs(item.time).format('YYYY年M月DD日'), // 可用 dayjs 格式化
+      }))
+  );
+});
 
 // 查询艺人信息
 async function queryPerson(id: number) {
   const queryResult = await searchPersonById(id);
   console.warn(`艺人详情: ${queryResult}`);
+  person.value = queryResult;
+}
+
+// 查询评价
+async function queryComments(personId: number) {
+  const queryResult = await searchCommentsByPersonId(personId);
+  console.warn(`评价列表: ${queryResult}`);
+  const recentComment = queryResult[0];
+  if (recentComment) {
+    recentCooperations.value = recentComment;
+  }
+  const historyComments = queryResult.slice(1);
+  historyCooperations.value = historyComments;
 }
 
 onMounted(() => {
   queryPerson(personId);
+  queryComments(personId);
 });
 </script>
 
@@ -134,15 +134,21 @@ onMounted(() => {
         <h3 class="mb-4 text-center">最近合作</h3>
         <div class="flex flex-col gap-2">
           <div
-            v-for="item in recentCooperations"
-            :key="item.id"
             class="flex items-start justify-between border-b border-gray-200 p-2"
+            v-if="recentCooperations"
           >
-            <span>{{ item.date }}</span>
-            <span>{{ item.content }}</span>
-            <span>{{ item.director }}</span>
-            <Rate :value="item.score" :count="5" allow-half />
-            <span>{{ item.comment }}</span>
+            <span>{{
+              dayjs(recentCooperations.time).format('YYYY年M月DD日')
+            }}</span>
+            <span>{{ recentCooperations.content }}</span>
+            <span>{{ recentCooperations.director }}</span>
+            <Rate
+              :value="recentCooperations.score"
+              :count="5"
+              allow-half
+              :disabled="true"
+            />
+            <span class="max-w-[500px]">{{ recentCooperations.evaluate }}</span>
           </div>
         </div>
       </Card>
@@ -152,7 +158,7 @@ onMounted(() => {
         <h3 class="mb-4 text-center">历史合作</h3>
         <Table
           :columns="historyColumns"
-          :data-source="historyCooperations"
+          :data-source="processedHistory"
           row-key="id"
         />
       </Card>

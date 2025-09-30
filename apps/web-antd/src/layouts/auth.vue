@@ -7,13 +7,16 @@ import { preferences } from '@vben/preferences';
 import { $t } from '#/locales';
 
 const appName = computed(() => preferences.app.name);
-const logo = computed(() => preferences.logo.source);
+// 登录页图标
+// const logo = computed(() => preferences.logo.source);
+// :app-name="appName"
+//     logo="/logo.jpg"
 </script>
 
 <template>
   <AuthPageLayout
     :app-name="appName"
-    :logo="logo"
+    logo="/favicon.ico"
     :page-description="$t('authentication.pageDesc')"
     :page-title="$t('authentication.pageTitle')"
     :toolbar="false"

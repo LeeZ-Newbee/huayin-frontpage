@@ -5,7 +5,7 @@ interface CommentInfo {
    */
   time: number | undefined;
   /**
-   * 合作内容
+   * 评价
    */
   evaluate: string | undefined;
   /**
@@ -17,7 +17,7 @@ interface CommentInfo {
    */
   score: number | undefined;
   /**
-   * 评价内容
+   * 合作内容
    */
   content: string | undefined;
 

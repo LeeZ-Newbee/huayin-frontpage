@@ -1,4 +1,5 @@
 import type { CommentInfo } from '../type/comment';
+import type { MediaTag } from '../type/mediatag';
 import type { PersonInfo } from '../type/person';
 
 import { requestClient } from '#/api/request';
@@ -8,6 +9,9 @@ interface MediaDemo {
   demoType: number;
   fileUrl: string;
   artistId: number;
+  // 所属艺人名
+  name: string;
+  // 所属艺人id
   isPlayed: boolean;
 }
 
@@ -34,6 +38,13 @@ interface PersonSearchInfo {
  */
 interface SearchMediaDemosResult {
   auditions: MediaDemo[];
+}
+
+/**
+ * 音视频小样搜索结果
+ */
+interface SearchMediaDemosResult2 {
+  demos: MediaDemo[];
 }
 
 /**
@@ -66,6 +77,13 @@ export async function searchPersonById(artistId: number) {
  */
 export async function updatePerson(person: PersonInfo) {
   return requestClient.post('/api/artist/update', person);
+}
+
+/**
+ * 删除人员
+ */
+export async function deletePerson(personId: number) {
+  return requestClient.post('/api/artist/delete', { artisId: personId });
 }
 
 /**
@@ -109,6 +127,33 @@ export async function searchMediaDemos(searchParams: PersonSearchInfo) {
     '/api/casting/select',
     searchParams,
   );
+}
+
+/**
+ * 根据人员id查询评价
+ */
+export async function searchCommentsByPersonId(artistId: number) {
+  return requestClient.post<CommentInfo[]>('/api/eval/list', {
+    artistId,
+  });
+}
+
+/**
+ * 根据标签查询多媒体文件
+ */
+export async function searchMediaDemosByTag(mediaTag: MediaTag) {
+  return requestClient.post<SearchMediaDemosResult2>('/api/demo/list', {
+    demoType: mediaTag,
+  });
+}
+
+/**
+ * 根据id删除多媒体文件
+ */
+export async function deleteMediaDemoById(id: number) {
+  return requestClient.post('/api/demo/delete', {
+    demoId: id,
+  });
 }
 
 export type { MediaDemo, PersonScoreInfo, PersonSearchInfo };

@@ -147,7 +147,9 @@ const [CommentForm, baseFormApi] = useVbenForm({
   <Card>
     <div class="flex flex-col gap-4">
       <div class="flex gap-1">
-        <Button type="text">艺名：</Button>
+        <Button type="text" style="pointer-events: none; cursor: default">
+          艺名：
+        </Button>
         <Input
           v-model:value="nickNameSearch"
           type="text"
@@ -158,8 +160,12 @@ const [CommentForm, baseFormApi] = useVbenForm({
 
       <!-- 搜索结果 -->
       <div class="flex gap-1" v-if="searchPersonResult">
-        <Button type="text">花名: {{ searchPersonResult.nickName }}</Button>
-        <Button type="text">真名: {{ searchPersonResult.name }}</Button>
+        <Button type="text" style="pointer-events: none; cursor: default">
+          花名: {{ searchPersonResult.nickName }}
+        </Button>
+        <Button type="text" style="pointer-events: none; cursor: default">
+          真名: {{ searchPersonResult.name }}
+        </Button>
       </div>
       <CommentForm v-if="searchPersonResult" />
     </div>

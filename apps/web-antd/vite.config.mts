@@ -14,6 +14,10 @@ export default defineConfig(async () => {
             // target: 'http://localhost:5320/api',
             ws: true,
           },
+          '/uploads': {
+            target: 'http://82.156.25.199:5001',
+            changeOrigin: true,
+          },
         },
       },
     },

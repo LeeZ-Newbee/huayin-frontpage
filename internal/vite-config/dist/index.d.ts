@@ -1,1 +1,1 @@
-export * from "/Users/zhichao.zhang/vue-vben-admin/internal/vite-config/src/index.js";
+export * from "/Users/zhichao.zhang/huayin-person-manager/internal/vite-config/src/index.js";

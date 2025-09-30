@@ -24,7 +24,7 @@ const nickNameSearch = defineModel<string>();
 const searchResultPerson = ref<null | PersonInfo>(null);
 
 // 基础创建表单是否可见
-const baseFormVisible = ref<boolean>(false);
+const baseFormVisible = ref<boolean>(true);
 
 // 主播表单是否可见
 const zbVoiceFormVisible = ref<boolean>(false);
@@ -247,6 +247,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       component: 'InputNumber',
       // 对应组件的参数
       componentProps: {
+        maxlength: 20,
         placeholder: '请输入',
       },
       // 字段名
@@ -272,6 +273,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       // 对应组件的参数
       componentProps: {
         placeholder: '请输入',
+        maxlength: 20,
       },
       // 字段名
       fieldName: 'qq',
@@ -308,6 +310,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       // 对应组件的参数
       componentProps: {
         placeholder: '请输入',
+        maxlength: 20,
       },
       // 字段名
       fieldName: 'emergencyTelphone',
@@ -320,6 +323,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       // 对应组件的参数
       componentProps: {
         placeholder: '请输入',
+        maxlength: 20,
       },
       // 字段名
       fieldName: 'telephone',
@@ -348,6 +352,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       // 对应组件的参数
       componentProps: {
         placeholder: '请输入',
+        maxlength: 3,
       },
       // 字段名
       fieldName: 'salary',
@@ -362,6 +367,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       // 对应组件的参数
       componentProps: {
         placeholder: '排名优先级(1~100)',
+        maxlength: 3,
       },
       // 字段名
       fieldName: 'priorityRating',
@@ -374,18 +380,20 @@ const [BaseForm, baseFormApi] = useVbenForm({
       component: 'Input',
       // 对应组件的参数
       componentProps: {
-        placeholder: '请输入',
+        maxlength: '4',
+        placeholder: '4字以内',
       },
       // 字段名
       fieldName: 'recommendWord1',
       // 界面显示的label
-      label: '推荐词1(4字以内)',
+      label: '推荐词1',
     },
     {
       component: 'Input',
       // 对应组件的参数
       componentProps: {
-        placeholder: '请输入',
+        maxlength: '4',
+        placeholder: '4字以内',
       },
       // 字段名
       fieldName: 'recommendWord2',
@@ -396,7 +404,8 @@ const [BaseForm, baseFormApi] = useVbenForm({
       component: 'Input',
       // 对应组件的参数
       componentProps: {
-        placeholder: '请输入',
+        maxlength: '4',
+        placeholder: '4字以内',
       },
       // 字段名
       fieldName: 'recommendWord3',
@@ -476,6 +485,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       rules: 'required',
     },
   ],
+  showDefaultActions: true,
   // 大屏一行显示3个，中屏一行显示2个，小屏一行显示1个
   wrapperClass: 'grid-cols-2',
 });
@@ -805,6 +815,9 @@ async function searchPerson() {
 
   searchResultPerson.value = searchResult;
 }
+
+// 删除艺人
+async function handlePersonDelete() {}
 </script>
 
 <template>

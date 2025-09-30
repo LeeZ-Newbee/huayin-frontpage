@@ -6,10 +6,11 @@ const routes: RouteRecordRaw[] = [
       icon: 'mdi:account',
       order: 600,
       title: '用户管理',
+      authority: ['admin'],
     },
     name: 'Users',
-    path: '/user/manager/add',
-    component: () => import('#/views/user-manager/add/index.vue'),
+    path: '/user/manager/list',
+    component: () => import('#/views/user-manager/list/index.vue'),
     // children: [
     //   {
     //     name: 'AllUser',

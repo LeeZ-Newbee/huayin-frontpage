@@ -3,7 +3,7 @@ import { createJiti } from "../../../node_modules/.pnpm/jiti@2.5.1/node_modules/
 const jiti = createJiti(import.meta.url, {
   "interopDefault": true,
   "alias": {
-    "@vben/node-utils": "/Users/zhichao.zhang/vue-vben-admin/internal/node-utils"
+    "@vben/node-utils": "/Users/zhichao.zhang/huayin-person-manager/internal/node-utils"
   },
   "transformOptions": {
     "babel": {
@@ -12,8 +12,8 @@ const jiti = createJiti(import.meta.url, {
   }
 })
 
-/** @type {import("/Users/zhichao.zhang/vue-vben-admin/internal/node-utils/src/index.js")} */
-const _module = await jiti.import("/Users/zhichao.zhang/vue-vben-admin/internal/node-utils/src/index.ts");
+/** @type {import("/Users/zhichao.zhang/huayin-person-manager/internal/node-utils/src/index.js")} */
+const _module = await jiti.import("/Users/zhichao.zhang/huayin-person-manager/internal/node-utils/src/index.ts");
 
 export const getStagedFiles = _module.getStagedFiles;
 export const gitAdd = _module.gitAdd;

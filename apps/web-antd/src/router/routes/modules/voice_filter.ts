@@ -6,6 +6,7 @@ const routes: RouteRecordRaw[] = [
       icon: 'mdi:delete',
       order: 700,
       title: '音频筛选',
+      authority: ['admin'],
     },
     name: 'Voice',
     path: '/voice/filter',

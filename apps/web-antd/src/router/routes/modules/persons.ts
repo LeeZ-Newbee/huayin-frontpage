@@ -6,6 +6,7 @@ const routes: RouteRecordRaw[] = [
       icon: 'mdi:account-badge-outline',
       order: 500,
       title: '人员管理',
+      authority: ['admin'],
     },
     name: 'Persons',
     path: '/persons/manager',
@@ -26,16 +27,6 @@ const routes: RouteRecordRaw[] = [
         meta: {
           icon: 'mdi:account-details-outline',
           title: '人员修改',
-        },
-      },
-      {
-        name: 'PersonDetail',
-        path: '/person-manager/detail/:artistId',
-        component: () => import('#/views/person-manager/detail/index.vue'),
-        meta: {
-          icon: 'mdi:account-details-outline',
-          title: '人员档案',
-          hideInMenu: true,
         },
       },
     ],
