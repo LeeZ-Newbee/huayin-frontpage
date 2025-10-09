@@ -48,10 +48,24 @@ interface SearchMediaDemosResult2 {
 }
 
 /**
+ * 所有艺人列表查询结果
+ */
+interface AllPersonListResult {
+  artists: PersonInfo[];
+}
+
+/**
  * 新建人员
  */
 export async function addPerson(person: PersonInfo) {
   return requestClient.post<PersonInfo>('/api/artist/add', person);
+}
+
+/**
+ * 获取所有人员
+ */
+export async function getAllPersion() {
+  return requestClient.post<PersonInfo[]>('/api/artist/list');
 }
 
 /**
@@ -83,7 +97,7 @@ export async function updatePerson(person: PersonInfo) {
  * 删除人员
  */
 export async function deletePerson(personId: number) {
-  return requestClient.post('/api/artist/delete', { artisId: personId });
+  return requestClient.post('/api/artist/delete', { artistId: personId });
 }
 
 /**

@@ -156,7 +156,12 @@ onMounted(() => {
               width="60px"
             />
             <div class="flex flex-col gap-1" style="min-width: 200px">
-              <span class="text-lg font-medium">{{ person.nickName }}</span>
+              <span
+                class="text-lg font-medium"
+                style="cursor: pointer"
+                @click="checkPersonDetail(person.artistId)"
+                >{{ person.nickName }}
+              </span>
               <div class="flex items-center gap-1">
                 <Button
                   v-if="person.recommendWord1?.length > 0"
@@ -196,7 +201,13 @@ onMounted(() => {
               width="60px"
             />
             <div class="flex flex-col gap-1" style="min-width: 200px">
-              <span class="text-lg font-medium">{{ person.nickName }}</span>
+              <span
+                class="text-lg font-medium"
+                style="cursor: pointer"
+                @click="checkPersonDetail(person.artistId)"
+              >
+                {{ person.nickName }}
+              </span>
               <div class="flex items-center gap-1">
                 <Rate
                   :allow-half="true"
@@ -231,24 +242,17 @@ onMounted(() => {
           <Button type="primary" @click="searchMediaDemo"> 搜索 </Button>
         </div>
 
-        <div class="flex gap-4">
+        <div class="flex items-center gap-4">
           <Button type="text" style="pointer-events: none; cursor: default">
             价格:
           </Button>
-          <Slider
-            v-model:value="persionSearchInfo.priceLow"
-            :max="500"
-            :min="0"
-            show-value="true"
-            style="width: 100px"
-          />
-
           <span>{{ persionSearchInfo.priceLow }}</span>
           <Slider
             v-model:value="persionSearchInfo.priceHigh"
             :max="500"
-            :min="0"
-            style="width: 100px"
+            :min="10"
+            :step="10"
+            style="width: 150px"
           />
           <span>{{ persionSearchInfo.priceHigh }}</span>
         </div>

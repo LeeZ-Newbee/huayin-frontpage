@@ -9,6 +9,7 @@ import { Card, Image, Rate, Table } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { searchCommentsByPersonId, searchPersonById } from '#/api';
+import ExpandableText from '#/views/_core/ExpandableText.vue';
 
 const route = useRoute();
 
@@ -40,11 +41,10 @@ const person = ref<PersonInfo>({
   gender: 0,
 });
 
-const recentCooperations = ref<CommentInfo | undefined>();
-
 const historyCooperations = ref<CommentInfo[]>([]);
+const recentCooperations = ref<CommentInfo[]>([]);
 
-const historyColumns = [
+const commentColumns = [
   { title: '日期', dataIndex: 'time', key: 'time' },
   { title: '合作内容', dataIndex: 'content', key: 'content' },
   { title: '配音导演', dataIndex: 'director', key: 'director' },
@@ -55,8 +55,30 @@ const historyColumns = [
     customRender: ({ text }: any) =>
       h(Rate, { value: text, count: 5, allowHalf: true, disabled: true }),
   },
-  { title: '评价', dataIndex: 'evaluate', key: 'evaluate', width: 500 },
+  {
+    title: '评价',
+    dataIndex: 'evaluate',
+    key: 'evaluate',
+    customRender: ({ record }: any) =>
+      h(ExpandableText, {
+        text: record.evaluate,
+        maxLength: 30,
+        width: '400px',
+      }),
+  },
 ];
+
+// 对数据二次处理，格式化时间
+const processedRecent = computed(() => {
+  return (
+    recentCooperations.value
+      // 格式化时间戳
+      .map((item) => ({
+        ...item,
+        time: dayjs(item.time).format('YYYY年M月DD日'), // 可用 dayjs 格式化
+      }))
+  );
+});
 
 // 对数据二次处理，格式化时间
 const processedHistory = computed(() => {
@@ -81,9 +103,21 @@ async function queryPerson(id: number) {
 async function queryComments(personId: number) {
   const queryResult = await searchCommentsByPersonId(personId);
   console.warn(`评价列表: ${queryResult}`);
+  if (Object.prototype.toString.call(queryResult) === '[object Object]') {
+    console.warn('评价列表为空');
+    return;
+  }
+  if (queryResult.length === 0) {
+    console.warn('评价列表为空1');
+    return;
+  }
   const recentComment = queryResult[0];
   if (recentComment) {
-    recentCooperations.value = recentComment;
+    recentCooperations.value = [recentComment];
+  }
+  if (queryResult.length <= 1) {
+    console.warn('评价列表长度小于1个');
+    return;
   }
   const historyComments = queryResult.slice(1);
   historyCooperations.value = historyComments;
@@ -132,7 +166,7 @@ onMounted(() => {
       <!-- 最近合作 -->
       <Card class="p-4">
         <h3 class="mb-4 text-center">最近合作</h3>
-        <div class="flex flex-col gap-2">
+        <!-- <div class="flex flex-col gap-2">
           <div
             class="flex items-start justify-between border-b border-gray-200 p-2"
             v-if="recentCooperations"
@@ -148,17 +182,29 @@ onMounted(() => {
               allow-half
               :disabled="true"
             />
-            <span class="max-w-[500px]">{{ recentCooperations.evaluate }}</span>
+
+            <ExpandableText
+              :text="recentCooperations.evaluate"
+              :max-length="30"
+              width="400px"
+            />
           </div>
-        </div>
+        </div> -->
+        <Table
+          :columns="commentColumns"
+          :data-source="processedRecent"
+          :pagination="false"
+          row-key="id"
+        />
       </Card>
 
       <!-- 历史合作 -->
       <Card class="p-4">
         <h3 class="mb-4 text-center">历史合作</h3>
         <Table
-          :columns="historyColumns"
+          :columns="commentColumns"
           :data-source="processedHistory"
+          :pagination="false"
           row-key="id"
         />
       </Card>

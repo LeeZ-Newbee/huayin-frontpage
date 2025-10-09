@@ -26,7 +26,17 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/person-manager/list/index.vue'),
         meta: {
           icon: 'mdi:account-details-outline',
+          title: '人员列表',
+        },
+      },
+      {
+        name: 'EditPerson',
+        path: '/person-manager/edit/:artistId',
+        component: () => import('#/views/person-manager/edit/index.vue'),
+        meta: {
+          icon: 'mdi:account-details-outline',
           title: '人员修改',
+          hideInMenu: true,
         },
       },
     ],

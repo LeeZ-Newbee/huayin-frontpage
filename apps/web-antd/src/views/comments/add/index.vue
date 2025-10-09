@@ -2,79 +2,21 @@
 import type { CommentInfo } from '#/api/type/comment';
 import type { PersonInfo } from '#/api/type/person';
 
-import { h, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
-import { Button, Card, Image, Input, message, Table } from 'ant-design-vue';
+import { Button, Card, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { useVbenForm } from '#/adapter/form';
-import { addComment, getAllPersion, searchPersonByNickName } from '#/api';
-import { SERVER_DOMAIN } from '#/api/type/constants';
+import { addComment, searchPersonById } from '#/api';
 import { router } from '#/router';
 
-const allPersonList = ref<PersonInfo[]>([]);
+const route = useRoute();
 
-const personListColumns = [
-  {
-    title: '艺名',
-    dataIndex: 'nickName',
-    key: 'nickName',
-    customRender: ({ record }: any) => {
-      return h(
-        'span',
-        {
-          style: 'cursor:pointer;',
-          onClick: () => checkPersonDetail(record.artistId),
-        },
-        record.nickName,
-      );
-    },
-  },
-  {
-    title: '头像',
-    dataIndex: 'avatar',
-    key: 'avatar',
-    customRender: ({ record }: any) => {
-      return h('div', [
-        h(Image, {
-          src: SERVER_DOMAIN + record.avatar,
-          width: 60,
-          height: 60,
-          preview: true,
-        }),
-      ]);
-    },
-  },
-  {
-    title: '操作',
-    key: 'action',
-    customRender: ({ record }: any) => {
-      return h('div', [
-        h(
-          Button,
-          {
-            type: 'primary',
-            size: 'small',
-            onClick: () => {
-              const artistId = record.artistId;
-              router.push({ name: 'AddComment', params: { artistId } });
-            },
-          },
-          () => '评价',
-        ),
-      ]);
-    },
-  },
-];
-
-// 查看艺人详情
-function checkPersonDetail(artistId: number | undefined) {
-  if (!artistId) {
-    console.error('艺人id为空');
-    return;
-  }
-  router.push({ name: 'PersonDetail', params: { artistId } });
-}
+// 人员id
+const personId = Number(route.params.artistId);
+console.warn(`艺人id:${personId}`);
 
 // 评价
 const comment = reactive<CommentInfo>({
@@ -93,22 +35,14 @@ const searchPersonResult = ref<null | PersonInfo>(null);
 /**
  * 艺人搜索
  */
-async function searchPerson() {
-  const searchContent = nickNameSearch.value;
-  console.warn(`搜索艺人:${searchContent}`);
-  if (searchContent === undefined || searchContent.length === 0) {
-    message.warn('搜索内容不能为空');
-    return;
-  }
-  const searchResult = await searchPersonByNickName(searchContent);
+async function searchPerson(personId: number) {
+  const searchResult = await searchPersonById(personId);
   console.warn(`搜索艺人结果:${searchResult}`);
   Object.entries(searchResult).forEach(([key, value]) => {
     console.warn(key, value);
   });
-
   searchPersonResult.value = searchResult;
   comment.artistId = searchResult.artistId;
-  allPersonList.value = [searchResult];
 }
 
 // 提交评价
@@ -119,7 +53,7 @@ async function onSubmit(values: Record<string, any>) {
     message.success({
       content: `创建评价成功`,
     });
-    baseFormApi.resetForm();
+    router.push({ name: 'Comments' });
   }
 }
 
@@ -209,43 +143,14 @@ const [CommentForm, baseFormApi] = useVbenForm({
   wrapperClass: 'grid-cols-4',
 });
 
-/**
- * 查询所有艺人
- */
-async function queryAllPersion() {
-  const queryResult = await getAllPersion();
-  console.warn(`所有人列表结果:${queryResult}`);
-  if (queryResult) {
-    allPersonList.value = queryResult.artists;
-  }
-}
-
 onMounted(() => {
-  queryAllPersion();
+  searchPerson(personId);
 });
 </script>
 
 <template>
   <Card>
     <div class="flex flex-col gap-4">
-      <div class="flex gap-1">
-        <Button type="text" style="pointer-events: none; cursor: default">
-          艺名：
-        </Button>
-        <Input
-          v-model:value="nickNameSearch"
-          type="text"
-          style="width: 400px"
-        />
-        <Button type="primary" @click="searchPerson">搜索</Button>
-      </div>
-
-      <Table
-        :data-source="allPersonList"
-        :columns="personListColumns"
-        :pagination="false"
-      />
-
       <!-- 搜索结果 -->
       <div class="flex gap-1" v-if="searchPersonResult">
         <Button type="text" style="pointer-events: none; cursor: default">
