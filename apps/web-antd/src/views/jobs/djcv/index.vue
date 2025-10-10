@@ -6,7 +6,7 @@ import type { PersonInfo } from '#/api/type/person';
 
 import { computed, onMounted, reactive, ref } from 'vue';
 
-import { VbenCheckButtonGroup } from '@vben/common-ui';
+import { Page, useVbenModal, VbenCheckButtonGroup } from '@vben/common-ui';
 
 import {
   Button,
@@ -42,6 +42,16 @@ const OneBatchSize = 5;
 
 // 当前一批的索引
 let currentBatchStartIndex = 0;
+
+// 播放状态记录：key 为音频 id（与模板中使用的 id 一致）
+const playingStatus = reactive<Record<number, boolean>>({});
+
+// 记录是否曾经点击过播放（用于控制“查看艺人详情”按钮可用性）
+const playedOnce = reactive<Record<number, boolean>>({});
+
+const currentVideoFileUrl = ref<null | string>(null);
+// 注册 Modal 实例
+const [Modal, modalApi] = useVbenModal();
 
 // 男女选择
 const presetGender = GenderOptions;
@@ -102,6 +112,14 @@ async function searchMediaDemo() {
   changeBatch();
 }
 
+// 点击按钮：切换播放/暂停
+function togglePlayByArtist(demo: MediaDemo) {
+  // playingStatus[demo.artistId] = true;
+  playedOnce[demo.artistId] = true;
+  currentVideoFileUrl.value = demo.fileUrl;
+  modalApi.open();
+}
+
 // 换一批
 function changeBatch() {
   const allDemos = mediaDemoQueryReuslt.value;
@@ -134,19 +152,12 @@ async function queryOldPersons() {
   oldPersionsResult.value = queryResult;
 }
 
-// 音频开始播放
-function handlePlay(deomoId: number | undefined) {
-  console.warn(`开始播放${deomoId}`);
-  const playDemo = mediaDemoQueryReuslt.value?.find((item) => {
-    return item.demoId === deomoId;
-  });
-  if (playDemo) {
-    playDemo.isPlayed = true;
-  }
-}
-
 // 查看艺人详情
-function checkPersonDetail(artistId: number) {
+function checkPersonDetail(artistId: number | undefined) {
+  if (!artistId) {
+    console.error('艺人id为空');
+    return;
+  }
   router.push({ name: 'PersonDetail', params: { artistId } });
 }
 
@@ -157,167 +168,208 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full w-full gap-4 overflow-x-auto py-2">
-    <!-- 新人榜 -->
-    <Card class="flex-1">
-      <template #title>
-        <div class="w-full text-center">最新演员</div>
-      </template>
-      <div class="flex flex-col gap-4">
-        <Card v-for="person in latestPersionsResult" :key="person.artistId">
-          <div class="flex items-center gap-1">
-            <Image
-              :src="SERVER_DOMAIN + person.avatar"
-              height="60px"
-              width="60px"
-            />
-            <div class="flex flex-col gap-1" style="min-width: 200px">
-              <span class="text-lg font-medium">{{ person.nickName }}</span>
-              <div class="flex items-center gap-1">
-                <Button
-                  v-if="person.recommendWord1?.length > 0"
-                  style="pointer-events: none; cursor: default"
-                >
-                  {{ person.recommendWord1 }}
-                </Button>
-                <Button
-                  v-if="person.recommendWord2?.length > 0"
-                  style="pointer-events: none; cursor: default"
-                >
-                  {{ person.recommendWord2 }}
-                </Button>
-                <Button
-                  v-if="person.recommendWord3?.length > 0"
-                  style="pointer-events: none; cursor: default"
-                >
-                  {{ person.recommendWord3 }}
-                </Button>
+  <Page auto-content-height>
+    <div class="flex h-full w-full gap-4 overflow-x-auto py-2">
+      <!-- 新人榜 -->
+      <Card class="flex-1">
+        <template #title>
+          <div class="w-full text-center">最新演员</div>
+        </template>
+        <div class="flex flex-col gap-4">
+          <Card v-for="person in latestPersionsResult" :key="person.artistId">
+            <div class="flex items-center gap-1">
+              <Image
+                :src="SERVER_DOMAIN + person.avatar"
+                height="60px"
+                width="60px"
+              />
+              <div class="flex flex-col gap-1" style="min-width: 200px">
+                <span
+                  class="text-lg font-medium"
+                  style="cursor: pointer"
+                  @click="checkPersonDetail(person.artistId)"
+                  >{{ person.nickName }}
+                </span>
+                <div class="flex items-center gap-1">
+                  <Button
+                    v-if="person.recommendWord1?.length > 0"
+                    style="pointer-events: none; cursor: default"
+                  >
+                    {{ person.recommendWord1 }}
+                  </Button>
+                  <Button
+                    v-if="person.recommendWord2?.length > 0"
+                    style="pointer-events: none; cursor: default"
+                  >
+                    {{ person.recommendWord2 }}
+                  </Button>
+                  <Button
+                    v-if="person.recommendWord3?.length > 0"
+                    style="pointer-events: none; cursor: default"
+                  >
+                    {{ person.recommendWord3 }}
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
-      </div>
-    </Card>
-    <!-- 合作默契榜 -->
-    <Card class="flex-1">
-      <template #title>
-        <div class="w-full text-center">合作默契榜</div>
-      </template>
-      <div class="flex flex-col gap-4">
-        <Card v-for="person in oldPersionsResult" :key="person.artistId">
-          <div class="flex items-center gap-1">
-            <Image
-              :src="SERVER_DOMAIN + person.avatar"
-              height="60px"
-              width="60px"
-            />
-            <div class="flex flex-col gap-1" style="min-width: 200px">
-              <span class="text-lg font-medium">{{ person.nickName }}</span>
-              <div class="flex items-center gap-1">
-                <Rate
-                  :allow-half="true"
-                  :value="Math.floor(person.score) / 2"
-                  :count="5"
-                  :disabled="true"
-                />
-                <span>{{ Math.floor(person.score) }}分</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-    </Card>
-    <Card class="flex-[2]">
-      <template #title>
-        <div class="w-full text-center">选角</div>
-      </template>
-      <div class="flex w-full flex-col gap-2">
-        <div class="flex gap-1">
-          <Button type="text" style="pointer-events: none; cursor: default">
-            艺名:
-          </Button>
-          <Input
-            v-model:value="persionSearchInfo.avatarName"
-            type="text"
-            style="width: 200px"
-            placeholder="模糊搜索"
-          />
-          <Button type="primary" @click="searchMediaDemo"> 搜索 </Button>
-        </div>
-
-        <div class="flex gap-1">
-          <Button type="text" style="pointer-events: none; cursor: default">
-            性别:
-          </Button>
-          <Select
-            v-model:value="gender"
-            style="width: 100px"
-            @change="onGenderChange"
-          >
-            <Select.Option
-              :value="preset.value"
-              v-for="preset in presetGender"
-              :key="preset.value"
-            >
-              {{ preset.label }}
-            </Select.Option>
-          </Select>
-        </div>
-
-        <div class="flex gap-4">
-          <Button type="text" style="pointer-events: none; cursor: default">
-            价格:
-          </Button>
-          <Slider
-            v-model:value="persionSearchInfo.priceLow"
-            :max="500"
-            :min="0"
-            show-value="true"
-            style="width: 100px"
-          />
-          <span>{{ persionSearchInfo.priceLow }}</span>
-          <Slider
-            v-model:value="persionSearchInfo.priceHigh"
-            :max="500"
-            :min="0"
-            style="width: 100px"
-          />
-          <span>{{ persionSearchInfo.priceHigh }}</span>
-        </div>
-        <div class="flex gap-4">
-          <Button type="text" style="pointer-events: none; cursor: default">
-            标签:
-          </Button>
-
-          <VbenCheckButtonGroup
-            v-model="persionSearchInfo.tagId"
-            :options="filterTagOptions"
-            v-bind="compProps"
-          />
-        </div>
-        <div class="border-b border-gray-200"></div>
-
-        <div class="flex h-full flex-col">
-          <Card v-for="demo in currentBatchList" :key="demo.artistId">
-            <video
-              :src="SERVER_DOMAIN + demo.fileUrl"
-              controls
-              width="400"
-              height="200"
-              @play="handlePlay(demo.demoId)"
-            ></video>
-            <div style="height: 10px"></div>
-            <Button
-              type="primary"
-              :disabled="demo.isPlayed !== true"
-              @click="checkPersonDetail(demo.artistId)"
-            >
-              查看艺人详情
-            </Button>
           </Card>
         </div>
-        <Button type="primary" @click="changeBatch">换一批</Button>
-      </div>
-    </Card>
-  </div>
+      </Card>
+      <!-- 合作默契榜 -->
+      <Card class="flex-1">
+        <template #title>
+          <div class="w-full text-center">合作默契榜</div>
+        </template>
+        <div class="flex flex-col gap-4">
+          <Card v-for="person in oldPersionsResult" :key="person.artistId">
+            <div class="flex items-center gap-1">
+              <Image
+                :src="SERVER_DOMAIN + person.avatar"
+                height="60px"
+                width="60px"
+              />
+              <div class="flex flex-col gap-1" style="min-width: 200px">
+                <span
+                  class="text-lg font-medium"
+                  style="cursor: pointer"
+                  @click="checkPersonDetail(person.artistId)"
+                  >{{ person.nickName }}
+                </span>
+                <div class="flex items-center gap-1">
+                  <Rate
+                    :allow-half="true"
+                    :value="Math.floor(person.score) / 2"
+                    :count="5"
+                    :disabled="true"
+                  />
+                  <span>{{ Math.floor(person.score) }}分</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </Card>
+      <Card class="flex-[2]">
+        <template #title>
+          <div class="w-full text-center">选角</div>
+        </template>
+        <div class="flex w-full flex-col gap-2">
+          <div class="flex gap-1">
+            <Button type="text" style="pointer-events: none; cursor: default">
+              艺名:
+            </Button>
+            <Input
+              v-model:value="persionSearchInfo.avatarName"
+              type="text"
+              style="width: 200px"
+              placeholder="模糊搜索"
+            />
+            <Button type="primary" @click="searchMediaDemo"> 搜索 </Button>
+          </div>
+
+          <div class="flex gap-1">
+            <Button type="text" style="pointer-events: none; cursor: default">
+              性别:
+            </Button>
+            <Select
+              v-model:value="gender"
+              style="width: 100px"
+              @change="onGenderChange"
+            >
+              <Select.Option
+                :value="preset.value"
+                v-for="preset in presetGender"
+                :key="preset.value"
+              >
+                {{ preset.label }}
+              </Select.Option>
+            </Select>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <Button type="text" style="pointer-events: none; cursor: default">
+              价格:
+            </Button>
+            <span>{{ persionSearchInfo.priceLow }}</span>
+            <Slider
+              v-model:value="persionSearchInfo.priceHigh"
+              :max="500"
+              :min="10"
+              :step="10"
+              style="width: 150px"
+            />
+            <span>{{ persionSearchInfo.priceHigh }}</span>
+          </div>
+          <div class="flex gap-4">
+            <Button type="text" style="pointer-events: none; cursor: default">
+              标签:
+            </Button>
+
+            <VbenCheckButtonGroup
+              v-model="persionSearchInfo.tagId"
+              :options="filterTagOptions"
+              v-bind="compProps"
+            />
+          </div>
+          <div class="border-b border-gray-200"></div>
+
+          <!-- 让每一行显示5个，并且做一个播放暂停按钮 -->
+          <div class="flex flex-wrap gap-4">
+            <Card v-for="demo in currentBatchList" :key="demo.artistId">
+              <button
+                @click="togglePlayByArtist(demo)"
+                class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-black shadow-md transition-all duration-300 hover:bg-gray-900"
+              >
+                <!-- 播放图标（三角形）点击后播放 -->
+                <div
+                  v-if="!playingStatus[demo.artistId]"
+                  class="ml-1 h-0 w-0 border-b-[9px] border-l-[16px] border-t-[9px] border-b-transparent border-l-white border-t-transparent transition-transform duration-300"
+                ></div>
+
+                <!-- 暂停图标（双矩形） -->
+                <div v-else class="flex space-x-1">
+                  <div class="h-6 w-2 rounded-sm bg-white"></div>
+                  <div class="h-6 w-2 rounded-sm bg-white"></div>
+                </div>
+              </button>
+              <Button
+                type="primary"
+                class="mt-1"
+                :disabled="!playedOnce[demo.artistId]"
+                @click="checkPersonDetail(demo.artistId)"
+              >
+                详情
+              </Button>
+            </Card>
+          </div>
+          <Button type="primary" @click="changeBatch">换一批</Button>
+        </div>
+      </Card>
+    </div>
+
+    <Modal
+      :width="800"
+      :footer="false"
+      :fullscreen-button="false"
+      destroy-on-close
+    >
+      <video
+        class="video-wrapper"
+        v-if="currentVideoFileUrl"
+        :src="currentVideoFileUrl"
+        controls
+        autoplay
+      ></video>
+    </Modal>
+  </Page>
 </template>
+
+<style scoped>
+.video-wrapper {
+  width: 100%;
+  max-height: 70vh; /* 限制最大高度 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+</style>

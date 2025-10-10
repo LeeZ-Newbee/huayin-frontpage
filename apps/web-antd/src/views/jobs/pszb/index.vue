@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { ComponentPublicInstance } from 'vue';
+
 import type { Recordable } from '@vben/types';
 
 import type { MediaDemo, PersonScoreInfo, PersonSearchInfo } from '#/api';
@@ -40,6 +42,15 @@ const OneBatchSize = 5;
 
 // 当前一批的索引
 let currentBatchStartIndex = 0;
+
+// 播放状态记录：key 为音频 id（与模板中使用的 id 一致）
+const playingStatus = reactive<Record<number, boolean>>({});
+
+// 对应每个 demo 的 audio 元素引用，key 使用 artistId
+const audioRefs = reactive<Record<number, HTMLAudioElement | null>>({});
+
+// 记录是否曾经点击过播放（用于控制“查看艺人详情”按钮可用性）
+const playedOnce = reactive<Record<number, boolean>>({});
 
 const tagOptions = filterMedaiTagOptions(undefined, JobType.pszb);
 
@@ -97,14 +108,57 @@ async function queryOldPersons() {
 }
 
 // 音频开始播放
-function handlePlay(deomoId: number | undefined) {
-  console.warn(`开始播放${deomoId}`);
-  const playDemo = mediaDemoQueryReuslt.value?.find((item) => {
-    return item.demoId === deomoId;
+function handlePlay(artistId: number | undefined) {
+  console.warn(`开始播放 artistId=${artistId}`);
+  if (artistId === undefined) return;
+  // 保证仅有一个音频在播放
+  Object.entries(audioRefs).forEach(([key, el]) => {
+    if (Number(key) !== artistId && el && !el.paused) {
+      el.pause();
+    }
   });
-  if (playDemo) {
-    playDemo.isPlayed = true;
+  // 重置所有播放状态
+  Object.keys(playingStatus).forEach(
+    (key) => (playingStatus[Number(key)] = false),
+  );
+  playingStatus[artistId] = true;
+  playedOnce[artistId] = true;
+}
+// 播放暂停
+function handlePause(artistId: number | undefined) {
+  console.warn(`暂停播放 artistId=${artistId}`);
+  if (artistId === undefined) return;
+  playingStatus[artistId] = false;
+}
+function handleEnded(artistId: number | undefined) {
+  console.warn(`播放结束 artistId=${artistId}`);
+  if (artistId === undefined) return;
+  playingStatus[artistId] = false;
+}
+
+// 点击按钮：切换播放/暂停
+function togglePlayByArtist(artistId: number | undefined) {
+  if (artistId === undefined) return;
+  const audio = audioRefs[artistId];
+  if (!audio) return;
+  // 可选：确保同时仅有一个在播放
+  Object.entries(audioRefs).forEach(([key, el]) => {
+    if (Number(key) !== artistId && el && !el.paused) {
+      el.pause();
+    }
+  });
+  if (audio.paused) {
+    audio.play();
+  } else {
+    audio.pause();
   }
+}
+
+// 生成与 Vue 要求兼容的 ref 回调，内部保存为 HTMLAudioElement
+function setAudioRef(artistId: number) {
+  return (el: ComponentPublicInstance | Element | null) => {
+    audioRefs[artistId] = (el as unknown as HTMLAudioElement) ?? null;
+  };
 }
 
 // 换一批
@@ -268,23 +322,43 @@ onMounted(() => {
           />
         </div>
         <div class="border-b border-gray-200"></div>
-
-        <div class="flex h-full flex-col gap-4">
+        <!-- 让每一行显示5个，并且做一个播放暂停按钮 -->
+        <div class="flex flex-wrap gap-4">
           <Card v-for="demo in currentBatchList" :key="demo.artistId">
             <audio
               :src="SERVER_DOMAIN + demo.fileUrl"
               controls
-              width="400"
+              width="200"
               height="200"
-              @play="handlePlay(demo.demoId)"
+              @play="handlePlay(demo.artistId)"
+              @pause="handlePause(demo.artistId)"
+              @ended="handleEnded(demo.artistId)"
+              class="hidden"
+              :ref="setAudioRef(demo.artistId)"
             ></audio>
-            <div style="height: 10px"></div>
+            <button
+              @click="togglePlayByArtist(demo.artistId)"
+              class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-black shadow-md transition-all duration-300 hover:bg-gray-900"
+            >
+              <!-- 播放图标（三角形）点击后播放 -->
+              <div
+                v-if="!playingStatus[demo.artistId]"
+                class="ml-1 h-0 w-0 border-b-[9px] border-l-[16px] border-t-[9px] border-b-transparent border-l-white border-t-transparent transition-transform duration-300"
+              ></div>
+
+              <!-- 暂停图标（双矩形） -->
+              <div v-else class="flex space-x-1">
+                <div class="h-6 w-2 rounded-sm bg-white"></div>
+                <div class="h-6 w-2 rounded-sm bg-white"></div>
+              </div>
+            </button>
             <Button
               type="primary"
-              :disabled="demo.isPlayed !== true"
+              class="mt-1"
+              :disabled="!playedOnce[demo.artistId]"
               @click="checkPersonDetail(demo.artistId)"
             >
-              查看艺人详情
+              详情
             </Button>
           </Card>
         </div>

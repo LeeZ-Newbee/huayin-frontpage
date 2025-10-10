@@ -35,7 +35,7 @@ export enum JobType {
    */
   yshq = 8,
   /**
-   * 主播旁边
+   * 主播旁白
    */
   zbpb = 4,
 }

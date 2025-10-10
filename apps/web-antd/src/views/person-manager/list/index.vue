@@ -1,20 +1,42 @@
 <script lang="ts" setup>
+import type { Recordable } from '@vben/types';
+
 import type { PersonInfo } from '#/api/type/person';
 
-import { h, onMounted, ref } from 'vue';
+import { h, onMounted, reactive, ref, watch } from 'vue';
 
-import { confirm, Page } from '@vben/common-ui';
+import { confirm, Page, VbenCheckButtonGroup } from '@vben/common-ui';
 import { useRefresh } from '@vben/hooks';
 
 import { Button, Card, Image, Input, message, Table } from 'ant-design-vue';
 
 import { deletePerson, getAllPersion, searchPersonByNickName } from '#/api';
 import { SERVER_DOMAIN } from '#/api/type/constants';
+import { JobOptions } from '#/api/type/job';
 import { router } from '#/router';
 
 const { refresh } = useRefresh();
 
 const nickNameSearch = defineModel<string>();
+
+const jobProps = reactive({
+  beforeChange: undefined,
+  disabled: false,
+  gap: 20,
+  showIcon: false,
+  size: 'middle',
+  allowClear: false,
+} as Recordable<any>);
+
+const jobSelected = ref<number | undefined>(); // 单选
+// 监听岗位切换
+// 监听选中变化
+watch(jobSelected, (val) => {
+  console.warn('当前选中值:', val);
+  if (val) {
+    queryAllPersion(val);
+  }
+});
 
 const allPersonList = ref<PersonInfo[]>([]);
 
@@ -87,7 +109,7 @@ function checkPersonDetail(artistId: number | undefined) {
   router.push({ name: 'PersonDetail', params: { artistId } });
 }
 
-// 编译用户
+// 编辑用户
 function handlePersonEdit(person: any) {
   const artistId = person.artistId;
   router.push({ name: 'EditPerson', params: { artistId } });
@@ -113,6 +135,7 @@ async function deletePersonReal(person: any) {
  * 艺人搜索
  */
 async function searchPerson() {
+  jobSelected.value = undefined;
   const searchContent = nickNameSearch.value;
   console.warn(`搜索艺人:${searchContent}`);
   if (searchContent === undefined || searchContent.length === 0) {
@@ -130,8 +153,8 @@ async function searchPerson() {
 /**
  * 查询所有艺人
  */
-async function queryAllPersion() {
-  const queryResult = await getAllPersion();
+async function queryAllPersion(jobId?: number) {
+  const queryResult = await getAllPersion(jobId);
   console.warn(`所有人列表结果:${queryResult}`);
   if (queryResult) {
     allPersonList.value = queryResult.artists;
@@ -156,6 +179,12 @@ onMounted(() => {
           />
           <Button type="primary" @click="searchPerson">搜索</Button>
         </div>
+
+        <VbenCheckButtonGroup
+          v-model="jobSelected"
+          :options="JobOptions"
+          v-bind="jobProps"
+        />
       </div>
     </Card>
 

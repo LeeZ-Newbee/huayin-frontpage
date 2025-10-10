@@ -25,3 +25,12 @@ pnpm run dev
 ```bash
 pnpm build
 ```
+
+5. 部署
+
+```bash
+页面存放目录：/var/www/vue-project/huayin/dist/
+scp -r ../dist.zip  root@82.156.25.199:/var/www/vue-project/huayin/dist/
+unzip dist.zip
+重启NGINX nginx -s reload
+```

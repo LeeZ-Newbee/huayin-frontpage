@@ -9,6 +9,7 @@ import { Button, Card, Image, Rate } from 'ant-design-vue';
 import { latestPersions, oldPersions } from '#/api';
 import { SERVER_DOMAIN } from '#/api/type/constants';
 import { JobType } from '#/api/type/job';
+import { router } from '#/router';
 
 // 新人榜查询结果
 const latestPersionsResult = ref<PersonInfo[] | undefined>([]);
@@ -28,6 +29,15 @@ async function queryOldPersons() {
   const queryResult = await oldPersions(JobType.hb);
   console.warn(`老人榜${queryResult}`);
   oldPersionsResult.value = queryResult;
+}
+
+// 查看艺人详情
+function checkPersonDetail(artistId: number | undefined) {
+  if (!artistId) {
+    console.error('艺人id为空');
+    return;
+  }
+  router.push({ name: 'PersonDetail', params: { artistId } });
 }
 
 onMounted(() => {
@@ -52,7 +62,12 @@ onMounted(() => {
               width="60px"
             />
             <div class="flex flex-col gap-1" style="min-width: 200px">
-              <span class="text-lg font-medium">{{ person.nickName }}</span>
+              <span
+                class="text-lg font-medium"
+                style="cursor: pointer"
+                @click="checkPersonDetail(person.artistId)"
+                >{{ person.nickName }}
+              </span>
               <div class="flex items-center gap-1">
                 <Button
                   v-if="person.recommendWord1?.length > 0"
@@ -92,7 +107,12 @@ onMounted(() => {
               width="60px"
             />
             <div class="flex flex-col gap-1" style="min-width: 200px">
-              <span class="text-lg font-medium">{{ person.nickName }}</span>
+              <span
+                class="text-lg font-medium"
+                style="cursor: pointer"
+                @click="checkPersonDetail(person.artistId)"
+                >{{ person.nickName }}
+              </span>
               <div class="flex items-center gap-1">
                 <Rate
                   :allow-half="true"

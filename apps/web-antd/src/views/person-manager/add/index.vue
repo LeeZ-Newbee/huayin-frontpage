@@ -6,7 +6,7 @@ import type { FormSchema } from '../../../../../../packages/@core/ui-kit/form-ui
 import type { MediaDemo } from '#/api';
 import type { PersonInfo } from '#/api/type/person';
 
-import { ref, toRaw } from 'vue';
+import { reactive, ref, toRaw } from 'vue';
 
 import { alert, Page } from '@vben/common-ui';
 import { useRefresh } from '@vben/hooks';
@@ -18,6 +18,7 @@ import { addPersionMedia, addPerson } from '#/api';
 import { Gender, GenderOptions } from '#/api/type/gender';
 import { JobOptions, JobType } from '#/api/type/job';
 import { filterMedaiTagOptions } from '#/api/type/mediatag';
+import { router } from '#/router';
 
 const { refresh } = useRefresh();
 
@@ -43,6 +44,21 @@ const addPersonGender = ref<number>();
 
 // 刚添加的人员岗位
 const addPersonJobType = ref<number>();
+
+const submitBtn = reactive({
+  content: '提交',
+});
+
+// 岗位切换
+function onJobChange(value: number) {
+  submitBtn.content =
+    value === JobType.pszb ||
+    value === JobType.zbpb ||
+    value === JobType.yscv ||
+    value === JobType.djcv
+      ? '下一步'
+      : '提交';
+}
 
 // 评书主播或主播旁白需要额外上传的音视频
 const zbVoiceFromSchemas: FormSchema[] = filterMedaiTagOptions(
@@ -204,6 +220,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
   // 提交函数
   handleSubmit: onBaseSubmit,
   handleValuesChange(_values, fieldsChanged) {},
+  submitButtonOptions: submitBtn,
 
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
@@ -247,6 +264,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       },
       fieldName: 'gender',
       label: '性别 : ',
+      rules: 'required',
     },
 
     {
@@ -279,7 +297,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       rules: 'required',
     },
     {
-      component: 'InputNumber',
+      component: 'Input',
       // 对应组件的参数
       componentProps: {
         placeholder: '请输入',
@@ -316,7 +334,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       rules: 'required',
     },
     {
-      component: 'InputNumber',
+      component: 'Input',
       // 对应组件的参数
       componentProps: {
         placeholder: '请输入',
@@ -329,7 +347,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       rules: 'required',
     },
     {
-      component: 'InputNumber',
+      component: 'Input',
       // 对应组件的参数
       componentProps: {
         placeholder: '请输入',
@@ -350,6 +368,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
         options: JobOptions,
         placeholder: '请选择',
         showSearch: true,
+        onChange: onJobChange,
       },
       // 占满2列空间 从第二列开始 相当于前面空了一列
       formItemClass: 'col-span-1 items-baseline',
@@ -390,7 +409,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       component: 'Input',
       // 对应组件的参数
       componentProps: {
-        maxlength: '4',
+        maxlength: 4,
         placeholder: '4字以内',
       },
       // 字段名
@@ -402,7 +421,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       component: 'Input',
       // 对应组件的参数
       componentProps: {
-        maxlength: '4',
+        maxlength: 4,
         placeholder: '4字以内',
       },
       // 字段名
@@ -414,7 +433,7 @@ const [BaseForm, baseFormApi] = useVbenForm({
       component: 'Input',
       // 对应组件的参数
       componentProps: {
-        maxlength: '4',
+        maxlength: 4,
         placeholder: '4字以内',
       },
       // 字段名
@@ -650,7 +669,7 @@ async function onBaseSubmit(values: Record<string, any>) {
     identityCardFront: idCardFrontFile[0],
     identityCardReverse: idCardReverseFile[0],
     salary: values.price,
-    priorityRating: values.priority,
+    priorityRating: values.priority ?? 0,
     createTime: undefined,
     gender: values.gender,
     ID: values.creditcard,
@@ -658,41 +677,42 @@ async function onBaseSubmit(values: Record<string, any>) {
   const result = await addPerson(newPerson);
   if (result.artistId) {
     addPersonId.value = result.artistId;
-    alert({
-      content: `添加成功(${addPersonId.value})`,
-      icon: 'success',
-    }).then(() => {
-      baseFormApi.resetForm();
-      if (
-        jobType === JobType.pszb ||
-        jobType === JobType.zbpb ||
-        jobType === JobType.yscv ||
-        jobType === JobType.djcv
-      ) {
-        // 评书主播、主播旁白、有声CV、短剧CV要继续选择录音或视图上传
-        console.warn(`特殊岗位${jobType}`);
-        baseFormVisible.value = false;
-        if (jobType === JobType.pszb || jobType === JobType.zbpb) {
-          zbVoiceFormVisible.value = true;
-        } else {
-          if (jobType === JobType.yscv) {
-            if (values.gender === Gender.Man) {
-              yscvManFormVisible.value = true;
-            } else {
-              yscvWomenFormVisible.value = true;
-            }
+    baseFormApi.resetForm();
+    if (
+      jobType === JobType.pszb ||
+      jobType === JobType.zbpb ||
+      jobType === JobType.yscv ||
+      jobType === JobType.djcv
+    ) {
+      // 评书主播、主播旁白、有声CV、短剧CV要继续选择录音或视图上传
+      console.warn(`特殊岗位${jobType}`);
+      baseFormVisible.value = false;
+      if (jobType === JobType.pszb || jobType === JobType.zbpb) {
+        zbVoiceFormVisible.value = true;
+      } else {
+        if (jobType === JobType.yscv) {
+          if (values.gender === Gender.Man) {
+            yscvManFormVisible.value = true;
           } else {
-            if (values.gender === Gender.Man) {
-              djcvManFormVisible.value = true;
-            } else {
-              djcvWomenFormVisible.value = true;
-            }
+            yscvWomenFormVisible.value = true;
+          }
+        } else {
+          if (values.gender === Gender.Man) {
+            djcvManFormVisible.value = true;
+          } else {
+            djcvWomenFormVisible.value = true;
           }
         }
-      } else {
-        console.warn(`非特殊岗位${jobType}`);
       }
-    });
+    } else {
+      console.warn(`非特殊岗位${jobType}`);
+      alert({
+        content: `添加成功)`,
+        icon: 'success',
+      }).then(() => {
+        router.push({ name: 'AllPerson' });
+      });
+    }
   }
 }
 
@@ -741,7 +761,7 @@ async function onDemoSubmit(values: Record<string, any>) {
     content: `添加完成`,
     icon: 'success',
   }).then(() => {
-    refresh();
+    router.push({ name: 'AllPerson' });
   });
 }
 </script>

@@ -64,8 +64,8 @@ export async function addPerson(person: PersonInfo) {
 /**
  * 获取所有人员
  */
-export async function getAllPersion() {
-  return requestClient.post<PersonInfo[]>('/api/artist/list');
+export async function getAllPersion(jobId?: number) {
+  return requestClient.post<AllPersonListResult>('/api/artist/list', { jobId });
 }
 
 /**

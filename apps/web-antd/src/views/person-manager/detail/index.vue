@@ -5,13 +5,20 @@ import type { PersonInfo } from '#/api/type/person';
 import { computed, h, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
-import { Card, Image, Rate, Table } from 'ant-design-vue';
+import { Page, useVbenModal } from '@vben/common-ui';
+
+import { Button, Card, Image, Rate, Table } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { searchCommentsByPersonId, searchPersonById } from '#/api';
 import ExpandableText from '#/views/_core/ExpandableText.vue';
 
 const route = useRoute();
+
+const current = ref<null | string>(null);
+
+// 注册 Modal 实例
+const [Modal, modalApi] = useVbenModal();
 
 // 人员id
 const personId = Number(route.params.artistId);
@@ -123,6 +130,18 @@ async function queryComments(personId: number) {
   historyCooperations.value = historyComments;
 }
 
+// 查看身份证正面
+function showIDFront(url: string) {
+  current.value = url;
+  modalApi.open();
+}
+
+// 查看身份证反
+function showIDReverse(url: string) {
+  current.value = url;
+  modalApi.open();
+}
+
 onMounted(() => {
   queryPerson(personId);
   queryComments(personId);
@@ -130,86 +149,98 @@ onMounted(() => {
 </script>
 
 <template>
-  <Card>
-    <template #title>
-      <div class="w-full text-center">人员档案</div>
-    </template>
+  <Page auto-content-height>
+    <Card>
+      <template #title>
+        <div class="w-full text-center">人员档案</div>
+      </template>
 
-    <div class="flex flex-col gap-6 p-4">
-      <!-- 人员档案 -->
-      <Card class="p-4">
-        <div class="flex">
-          <Image :src="person.avatar" height="120px" width="120px" />
-          <div class="left-margin flex flex-1 flex-col gap-3">
-            <div class="flex justify-between">
-              <span>花名：{{ person.nickName }}</span>
-              <span>QQ: {{ person.qq }}</span>
-              <span>身份证号：{{ person.ID }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span>姓名：{{ person.name }}</span>
-              <span>微信：{{ person.wechat }}</span>
-              <span>费用参考：{{ person.salary }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span>银行信息：{{ person.creditCardNum }}</span>
-              <span>电话：{{ person.telephone }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span>地址：{{ person.address }}</span>
-              <span>紧急联系人电话：{{ person.emergencyTelphone }}</span>
+      <div class="flex flex-col gap-6 p-4">
+        <!-- 人员档案 -->
+        <Card class="p-4">
+          <div class="flex">
+            <Image :src="person.avatar" height="120px" width="120px" />
+            <div class="left-margin flex flex-1 flex-col gap-3">
+              <div class="flex justify-between">
+                <span>花名：{{ person.nickName }}</span>
+                <span>QQ: {{ person.qq }}</span>
+                <div>
+                  <span>身份证号：{{ person.ID }}</span>
+                  <Button
+                    type="primary"
+                    style="margin-left: 8px"
+                    @click="showIDFront(person.identityCardFront)"
+                  >
+                    身份证正面
+                  </Button>
+                  <Button
+                    type="primary"
+                    style="margin-left: 8px"
+                    @click="showIDReverse(person.identityCardReverse)"
+                  >
+                    身份证反面
+                  </Button>
+                </div>
+              </div>
+              <div class="flex justify-between">
+                <span>姓名：{{ person.name }}</span>
+                <span>微信：{{ person.wechat }}</span>
+                <span>费用参考：{{ person.salary }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>银行信息：{{ person.creditCardNum }}</span>
+                <span>电话：{{ person.telephone }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>地址：{{ person.address }}</span>
+                <span>紧急联系人电话：{{ person.emergencyTelphone }}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      <!-- 最近合作 -->
-      <Card class="p-4">
-        <h3 class="mb-4 text-center">最近合作</h3>
-        <!-- <div class="flex flex-col gap-2">
-          <div
-            class="flex items-start justify-between border-b border-gray-200 p-2"
-            v-if="recentCooperations"
-          >
-            <span>{{
-              dayjs(recentCooperations.time).format('YYYY年M月DD日')
-            }}</span>
-            <span>{{ recentCooperations.content }}</span>
-            <span>{{ recentCooperations.director }}</span>
-            <Rate
-              :value="recentCooperations.score"
-              :count="5"
-              allow-half
-              :disabled="true"
-            />
+        <!-- 最近合作 -->
+        <Card class="p-4">
+          <h3 class="mb-4 text-center">最近合作</h3>
+          <Table
+            :columns="commentColumns"
+            :data-source="processedRecent"
+            :pagination="false"
+            row-key="id"
+          />
+        </Card>
 
-            <ExpandableText
-              :text="recentCooperations.evaluate"
-              :max-length="30"
-              width="400px"
-            />
-          </div>
-        </div> -->
-        <Table
-          :columns="commentColumns"
-          :data-source="processedRecent"
-          :pagination="false"
-          row-key="id"
-        />
-      </Card>
+        <!-- 历史合作 -->
+        <Card class="p-4">
+          <h3 class="mb-4 text-center">历史合作</h3>
+          <Table
+            :columns="commentColumns"
+            :data-source="processedHistory"
+            :pagination="false"
+            row-key="id"
+          />
+        </Card>
+      </div>
+    </Card>
 
-      <!-- 历史合作 -->
-      <Card class="p-4">
-        <h3 class="mb-4 text-center">历史合作</h3>
-        <Table
-          :columns="commentColumns"
-          :data-source="processedHistory"
-          :pagination="false"
-          row-key="id"
-        />
-      </Card>
-    </div>
-  </Card>
+    <Modal
+      :width="800"
+      :footer="false"
+      :fullscreen-button="false"
+      destroy-on-close
+    >
+      <Image
+        v-if="current"
+        :src="current"
+        style="
+          display: block;
+          max-width: 100%;
+          max-height: 80vh;
+          margin: 0 auto;
+        "
+      />
+    </Modal>
+  </Page>
 </template>
 
 <style scoped>
