@@ -6,7 +6,7 @@ import type { FormSchema } from '../../../../../../packages/@core/ui-kit/form-ui
 import type { MediaDemo } from '#/api';
 import type { PersonInfo } from '#/api/type/person';
 
-import { onMounted, ref, toRaw, watch } from 'vue';
+import { onMounted, reactive, ref, toRaw, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { alert, Page } from '@vben/common-ui';
@@ -188,6 +188,26 @@ const djcvWomonFromSchemas: FormSchema[] = filterMedaiTagOptions(
   },
 }));
 
+// 动态提交按钮配置
+const submitButtonOptions = reactive({
+  content: '提交',
+  type: 'primary',
+});
+
+// 监听岗位类型变化，动态更新提交按钮文本
+function updateSubmitButtonText(jobType: number) {
+  if (
+    jobType === JobType.pszb ||
+    jobType === JobType.zbpb ||
+    jobType === JobType.yscv ||
+    jobType === JobType.djcv
+  ) {
+    submitButtonOptions.content = '下一页';
+  } else {
+    submitButtonOptions.content = '提交';
+  }
+}
+
 // 添加艺人表单
 const [BaseForm, baseFormApi] = useVbenForm({
   // 所有表单项共用，可单独在表单内覆盖
@@ -202,7 +222,14 @@ const [BaseForm, baseFormApi] = useVbenForm({
   fieldMappingTime: [['rangePicker', ['startTime', 'endTime'], 'YYYY-MM-DD']],
   // 提交函数
   handleSubmit: onBaseSubmit,
-  handleValuesChange(_values, fieldsChanged) {},
+  handleValuesChange(_values, fieldsChanged) {
+    // 监听岗位类型变化
+    if (fieldsChanged.includes('job')) {
+      updateSubmitButtonText(Number(_values.job));
+    }
+  },
+  // 动态提交按钮配置
+  submitButtonOptions: submitButtonOptions,
 
   // 垂直布局，label和input在不同行，值为vertical
   // 水平布局，label和input在同一行
@@ -522,6 +549,8 @@ watch(searchResultPerson, (value) => {
         },
       ],
     });
+    // 根据当前岗位类型更新按钮文本
+    updateSubmitButtonText(value.job);
   } else {
     baseFormApi.resetForm();
   }
@@ -638,7 +667,7 @@ const [djcvWomenVideoForm, djcvWomanVideoFormApi] = useVbenForm({
 });
 
 // 处理文件上传结果
-function handleUploadChange({ file, fileList }) {
+function handleUploadChange({ file, fileList }: { file: any; fileList: any }) {
   if (file.status === 'done') {
     message.success(`上传成功${file.response.data.url}`);
   } else if (file.status === 'error') {
@@ -716,8 +745,8 @@ async function onBaseSubmit(values: Record<string, any>) {
       jobType === JobType.yscv ||
       jobType === JobType.djcv
     ) {
-      // 评书主播、主播旁白、有声CV、短剧CV要继续选择录音或视图上传
-      console.warn(`特殊岗位${jobType}`);
+      // 评书主播、主播旁白、有声CV、短剧CV需要跳转到demo上传页面
+      console.warn(`特殊岗位${jobType}，跳转到demo上传页面`);
       baseFormVisible.value = false;
       if (jobType === JobType.pszb || jobType === JobType.zbpb) {
         zbVoiceFormVisible.value = true;

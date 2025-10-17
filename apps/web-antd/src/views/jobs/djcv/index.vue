@@ -46,8 +46,9 @@ let currentBatchStartIndex = 0;
 // 播放状态记录：key 为音频 id（与模板中使用的 id 一致）
 const playingStatus = reactive<Record<number, boolean>>({});
 
-// 记录是否曾经点击过播放（用于控制“查看艺人详情”按钮可用性）
-const playedOnce = reactive<Record<number, boolean>>({});
+// 记录是否曾经点击过播放（用于控制"查看艺人详情"按钮可用性）
+// 使用 artistId + demoType 的组合作为key，确保不同demoType的播放状态独立
+const playedOnce = reactive<Record<string, boolean>>({});
 
 const currentVideoFileUrl = ref<null | string>(null);
 // 注册 Modal 实例
@@ -93,6 +94,8 @@ const persionSearchInfo = reactive<PersonSearchInfo>({
 
 // 开始选角
 async function searchMediaDemo() {
+  // 发起新搜索前：清理播放状态，避免需要手动点暂停
+  resetPlaybackState();
   // if (
   //   persionSearchInfo.avatarName === undefined ||
   //   persionSearchInfo.avatarName.length === 0
@@ -115,9 +118,27 @@ async function searchMediaDemo() {
 // 点击按钮：切换播放/暂停
 function togglePlayByArtist(demo: MediaDemo) {
   // playingStatus[demo.artistId] = true;
-  playedOnce[demo.artistId] = true;
+  // 使用 artistId + demoType 的组合作为key
+  const playKey = `${demo.artistId}_${demo.demoType}`;
+  playedOnce[playKey] = true;
   currentVideoFileUrl.value = demo.fileUrl;
   modalApi.open();
+}
+// 判断艺人是否在新人榜中
+function isNewArtist(artistId: number | undefined): boolean {
+  if (!artistId) return false;
+  return latestPersionsResult.value?.some(person => person.artistId === artistId)??false;
+}
+
+// 暂停所有并清理播放状态（在切换标签/搜索前调用）
+function resetPlaybackState() {
+  try {
+    Object.keys(playingStatus).forEach(
+      (key) => (playingStatus[Number(key)] = false),
+    );
+    currentVideoFileUrl.value = null;
+    modalApi.close();
+  } catch (e) {}
 }
 
 // 换一批
@@ -152,16 +173,54 @@ async function queryOldPersons() {
   oldPersionsResult.value = queryResult;
 }
 
+const STORAGE_KEY = 'castingState:djcv';
+const RESTORE_FLAG_KEY = 'castingState:restore:djcv';
+
+function saveCastingState() {
+  const state = {
+    gender: gender.value,
+    persionSearchInfo: { ...persionSearchInfo },
+    mediaDemoQueryReuslt: mediaDemoQueryReuslt.value,
+    currentBatchList: currentBatchList.value,
+    currentBatchStartIndex,
+  };
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function restoreCastingState() {
+  try {
+    const shouldRestore = sessionStorage.getItem(RESTORE_FLAG_KEY) === '1';
+    if (!shouldRestore) return;
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (state.gender !== undefined) gender.value = state.gender;
+    Object.assign(persionSearchInfo, state.persionSearchInfo ?? {});
+    mediaDemoQueryReuslt.value = state.mediaDemoQueryReuslt ?? [];
+    currentBatchList.value = state.currentBatchList ?? [];
+    currentBatchStartIndex = state.currentBatchStartIndex ?? 0;
+    // 恢复完成后清除恢复标记
+    sessionStorage.removeItem(RESTORE_FLAG_KEY);
+  } catch (e) {
+    console.warn('恢复选角状态失败', e);
+  }
+}
+
 // 查看艺人详情
 function checkPersonDetail(artistId: number | undefined) {
   if (!artistId) {
     console.error('艺人id为空');
     return;
   }
-  router.push({ name: 'PersonDetail', params: { artistId } });
+  // 保存当前选角页面状态
+  saveCastingState();
+  router.push({ name: 'PersonDetail', params: { artistId }, query: { fromJob: 'djcv' } });
 }
 
 onMounted(() => {
+  // 优先恢复历史状态
+  restoreCastingState();
+  // 仍然拉取榜单（不影响已恢复的选角结果）
   queryLatestPersons();
   queryOldPersons();
 });
@@ -332,12 +391,11 @@ onMounted(() => {
                   <div class="h-6 w-2 rounded-sm bg-white"></div>
                 </div>
               </button>
-              <Button
-                type="primary"
-                class="mt-1"
-                :disabled="!playedOnce[demo.artistId]"
-                @click="checkPersonDetail(demo.artistId)"
-              >
+            <Button
+              :type="isNewArtist(demo.artistId)?'primary':'default'"
+              :class="(isNewArtist(demo.artistId)?'mt-1 bg-green-500 hover:bg-green-600 border-green-500':'mt-1') + (!playedOnce[`${demo.artistId}_${demo.demoType}`] ? ' pointer-events-none cursor-not-allowed' : '')"
+              @click="checkPersonDetail(demo.artistId)"
+            >
                 详情
               </Button>
             </Card>

@@ -3,7 +3,7 @@ import { createJiti } from "../../../node_modules/.pnpm/jiti@2.5.1/node_modules/
 const jiti = createJiti(import.meta.url, {
   "interopDefault": true,
   "alias": {
-    "@vben/vsh": "/Users/zhichao.zhang/huayin-person-manager/scripts/vsh"
+    "@vben/vsh": "E:/GitHub/huayin-person-manager/scripts/vsh"
   },
   "transformOptions": {
     "babel": {
@@ -12,7 +12,7 @@ const jiti = createJiti(import.meta.url, {
   }
 })
 
-/** @type {import("/Users/zhichao.zhang/huayin-person-manager/scripts/vsh/src/index.js")} */
-const _module = await jiti.import("/Users/zhichao.zhang/huayin-person-manager/scripts/vsh/src/index.ts");
+/** @type {import("E:/GitHub/huayin-person-manager/scripts/vsh/src/index.js")} */
+const _module = await jiti.import("E:/GitHub/huayin-person-manager/scripts/vsh/src/index.ts");
 
 export default _module?.default ?? _module;

@@ -3,7 +3,7 @@ import type { CommentInfo } from '#/api/type/comment';
 import type { PersonInfo } from '#/api/type/person';
 
 import { computed, h, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 
@@ -11,14 +11,17 @@ import { Button, Card, Image, Rate, Table } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { searchCommentsByPersonId, searchPersonById } from '#/api';
-import ExpandableText from '#/views/_core/ExpandableText.vue';
 
 const route = useRoute();
+const router = useRouter();
 
 const current = ref<null | string>(null);
+const currentComment = ref<CommentInfo | null>(null);
 
 // 注册 Modal 实例
 const [Modal, modalApi] = useVbenModal();
+// 注册评价详情 Modal 实例
+const [CommentModal, commentModalApi] = useVbenModal();
 
 // 人员id
 const personId = Number(route.params.artistId);
@@ -60,18 +63,28 @@ const commentColumns = [
     dataIndex: 'score',
     key: 'score',
     customRender: ({ text }: any) =>
-      h(Rate, { value: text, count: 5, allowHalf: true, disabled: true }),
+      // 评分为 10 分制：每半颗星=1分，5 颗星=10 分
+      h(Rate, { value: Number(text) / 2, count: 5, allowHalf: true, disabled: true }),
   },
   {
     title: '评价',
     dataIndex: 'evaluate',
     key: 'evaluate',
-    customRender: ({ record }: any) =>
-      h(ExpandableText, {
-        text: record.evaluate,
-        maxLength: 30,
-        width: '400px',
-      }),
+    customRender: ({ record }: any) => {
+      const text = record.evaluate || '';
+      const shouldShowButton = text.length > 30;
+      
+      return h('div', { style: 'display: flex; align-items: center; max-width: 400px;' }, [
+        h('span', { 
+          style: 'flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;',
+          title: text
+        }, shouldShowButton ? `${text.slice(0, 30)}...` : text),
+        shouldShowButton ? h('a', {
+          style: 'margin-left: 6px; cursor: pointer; color: #409eff; white-space: nowrap;',
+          onClick: () => showCommentDetail(record)
+        }, '更多') : null
+      ]);
+    },
   },
 ];
 
@@ -142,10 +155,29 @@ function showIDReverse(url: string) {
   modalApi.open();
 }
 
+// 显示评价详情
+function showCommentDetail(comment: CommentInfo) {
+  currentComment.value = comment;
+  commentModalApi.open();
+}
+
 onMounted(() => {
   queryPerson(personId);
   queryComments(personId);
 });
+
+// 返回到选角页面（仅通过本按钮触发恢复）
+function goBack() {
+  const fromJob = (route.query.fromJob as string | undefined) ?? undefined;
+  if (fromJob) {
+    try {
+      sessionStorage.setItem(`castingState:restore:${fromJob}`, '1');
+    } catch (e) {
+      // ignore
+    }
+  }
+  router.back();
+}
 </script>
 
 <template>
@@ -161,39 +193,69 @@ onMounted(() => {
           <div class="flex">
             <Image :src="person.avatar" height="120px" width="120px" />
             <div class="left-margin flex flex-1 flex-col gap-3">
-              <div class="flex justify-between">
-                <span>花名：{{ person.nickName }}</span>
-                <span>QQ: {{ person.qq }}</span>
-                <div>
-                  <span>身份证号：{{ person.ID }}</span>
-                  <Button
-                    type="primary"
-                    style="margin-left: 8px"
-                    @click="showIDFront(person.identityCardFront)"
-                  >
-                    身份证正面
-                  </Button>
-                  <Button
-                    type="primary"
-                    style="margin-left: 8px"
-                    @click="showIDReverse(person.identityCardReverse)"
-                  >
-                    身份证反面
-                  </Button>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">花名：</span>
+                  <span class="info-value">{{ person.nickName }}</span>
                 </div>
-              </div>
-              <div class="flex justify-between">
-                <span>姓名：{{ person.name }}</span>
-                <span>微信：{{ person.wechat }}</span>
-                <span>费用参考：{{ person.salary }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>银行信息：{{ person.creditCardNum }}</span>
-                <span>电话：{{ person.telephone }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>地址：{{ person.address }}</span>
-                <span>紧急联系人电话：{{ person.emergencyTelphone }}</span>
+                <div class="info-item">
+                  <span class="info-label">QQ：</span>
+                  <span class="info-value">{{ person.qq }}</span>
+                </div>
+
+                
+
+                <div class="info-item">
+                  <span class="info-label">姓名：</span>
+                  <span class="info-value">{{ person.name }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">微信：</span>
+                  <span class="info-value">{{ person.wechat }}</span>
+                </div>
+
+                <div class="info-item">
+                  <span class="info-label">费用参考：</span>
+                  <span class="info-value">{{ person.salary }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">银行信息：</span>
+                  <span class="info-value">{{ person.creditCardNum }}</span>
+                </div>
+
+                <div class="info-item">
+                  <span class="info-label">电话：</span>
+                  <span class="info-value">{{ person.telephone }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">地址：</span>
+                  <span class="info-value">{{ person.address }}</span>
+                </div>
+
+                <div class="info-item">
+                  <span class="info-label">紧急联系人电话：</span>
+                  <span class="info-value">{{ person.emergencyTelphone }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">身份证号：</span>
+                  <span class="info-value">
+                    {{ person.ID }}
+                    <Button
+                      type="primary"
+                      style="margin-left: 8px"
+                      @click="showIDFront(person.identityCardFront)"
+                    >
+                      身份证正面
+                    </Button>
+                    <Button
+                      type="primary"
+                      style="margin-left: 8px"
+                      @click="showIDReverse(person.identityCardReverse)"
+                    >
+                      身份证反面
+                    </Button>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -240,11 +302,64 @@ onMounted(() => {
         "
       />
     </Modal>
+
+    <!-- 评价详情弹窗 -->
+    <CommentModal
+      :width="600"
+      :footer="false"
+      :fullscreen-button="false"
+      destroy-on-close
+      title="评价详情"
+    >
+      <div v-if="currentComment" class="comment-detail">
+        <div class="comment-text">{{ currentComment.evaluate }}</div>
+      </div>
+    </CommentModal>
+    <!-- 底部返回按钮 -->
+    <div class="mt-4 flex justify-center">
+      <Button type="primary" @click="goBack">返回</Button>
+    </div>
   </Page>
 </template>
 
 <style scoped>
 .left-margin {
   margin-left: 20px; /* 左侧外边距 20px */
+}
+
+.comment-detail {
+  padding: 20px;
+}
+
+.comment-text {
+  color: #333;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 14px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px; /* 行间距12、列间距24 */
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+}
+
+.info-label {
+  width: 120px; /* 固定标签宽度，保证纵向对齐 */
+  color: #666;
+  flex: 0 0 auto;
+}
+
+.info-value {
+  flex: 1 1 auto;
+  color: #111;
+  word-break: break-all;
 }
 </style>

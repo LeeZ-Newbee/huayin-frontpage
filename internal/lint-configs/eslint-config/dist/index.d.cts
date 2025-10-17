@@ -1,1 +1,1 @@
-export * from "/Users/zhichao.zhang/huayin-person-manager/internal/lint-configs/eslint-config/src/index.js";
+export * from "E:/GitHub/huayin-person-manager/internal/lint-configs/eslint-config/src/index.js";

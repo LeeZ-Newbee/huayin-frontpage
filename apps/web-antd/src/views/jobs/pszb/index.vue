@@ -49,8 +49,9 @@ const playingStatus = reactive<Record<number, boolean>>({});
 // 对应每个 demo 的 audio 元素引用，key 使用 artistId
 const audioRefs = reactive<Record<number, HTMLAudioElement | null>>({});
 
-// 记录是否曾经点击过播放（用于控制“查看艺人详情”按钮可用性）
-const playedOnce = reactive<Record<number, boolean>>({});
+// 记录是否曾经点击过播放（用于控制"查看艺人详情"按钮可用性）
+// 使用 artistId + demoType 的组合作为key，确保不同demoType的播放状态独立
+const playedOnce = reactive<Record<string, boolean>>({});
 
 const tagOptions = filterMedaiTagOptions(undefined, JobType.pszb);
 
@@ -74,6 +75,8 @@ const persionSearchInfo = reactive<PersonSearchInfo>({
 
 // 开始选角
 async function searchMediaDemo() {
+  // 发起新搜索前：暂停所有正在播放并清理播放状态，避免需要手动点暂停
+  resetPlaybackState();
   // if (
   //   persionSearchInfo.avatarName === undefined ||
   //   persionSearchInfo.avatarName.length === 0
@@ -108,8 +111,8 @@ async function queryOldPersons() {
 }
 
 // 音频开始播放
-function handlePlay(artistId: number | undefined) {
-  console.warn(`开始播放 artistId=${artistId}`);
+function handlePlay(artistId: number | undefined, demoType?: number) {
+  console.warn(`开始播放 artistId=${artistId}, demoType=${demoType}`);
   if (artistId === undefined) return;
   // 保证仅有一个音频在播放
   Object.entries(audioRefs).forEach(([key, el]) => {
@@ -122,7 +125,10 @@ function handlePlay(artistId: number | undefined) {
     (key) => (playingStatus[Number(key)] = false),
   );
   playingStatus[artistId] = true;
-  playedOnce[artistId] = true;
+  
+  // 使用 artistId + demoType 的组合作为key
+  const playKey = demoType ? `${artistId}_${demoType}` : artistId.toString();
+  playedOnce[playKey] = true;
 }
 // 播放暂停
 function handlePause(artistId: number | undefined) {
@@ -136,8 +142,24 @@ function handleEnded(artistId: number | undefined) {
   playingStatus[artistId] = false;
 }
 
+// 暂停所有并清理播放状态（在切换标签/搜索前调用）
+function resetPlaybackState() {
+  try {
+    Object.values(audioRefs).forEach((el) => {
+      if (el && !el.paused) el.pause();
+    });
+  } catch (e) {}
+  Object.keys(playingStatus).forEach((k) => (playingStatus[Number(k)] = false));
+}
+// 判断艺人是否在新人榜中
+function isNewArtist(artistId: number | undefined): boolean {
+  if (!artistId) return false;
+  return latestPersionsResult.value?.some(person => person.artistId === artistId)??false;
+}
+
+
 // 点击按钮：切换播放/暂停
-function togglePlayByArtist(artistId: number | undefined) {
+function togglePlayByArtist(artistId: number | undefined, demoType?: number) {
   if (artistId === undefined) return;
   const audio = audioRefs[artistId];
   if (!audio) return;
@@ -149,6 +171,9 @@ function togglePlayByArtist(artistId: number | undefined) {
   });
   if (audio.paused) {
     audio.play();
+    // 播放时记录播放状态
+    const playKey = demoType ? `${artistId}_${demoType}` : artistId.toString();
+    playedOnce[playKey] = true;
   } else {
     audio.pause();
   }
@@ -179,16 +204,52 @@ function changeBatch() {
   currentBatchStartIndex = endIndex;
 }
 
+const STORAGE_KEY = 'castingState:pszb';
+const RESTORE_FLAG_KEY = 'castingState:restore:pszb';
+
+function saveCastingState() {
+  const state = {
+    persionSearchInfo: { ...persionSearchInfo },
+    mediaDemoQueryReuslt: mediaDemoQueryReuslt.value,
+    currentBatchList: currentBatchList.value,
+    currentBatchStartIndex,
+  };
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function restoreCastingState() {
+  try {
+    const shouldRestore = sessionStorage.getItem(RESTORE_FLAG_KEY) === '1';
+    if (!shouldRestore) return;
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    Object.assign(persionSearchInfo, state.persionSearchInfo ?? {});
+    mediaDemoQueryReuslt.value = state.mediaDemoQueryReuslt ?? [];
+    currentBatchList.value = state.currentBatchList ?? [];
+    currentBatchStartIndex = state.currentBatchStartIndex ?? 0;
+    // 恢复完成后清除恢复标记
+    sessionStorage.removeItem(RESTORE_FLAG_KEY);
+  } catch (e) {
+    console.warn('恢复选角状态失败', e);
+  }
+}
+
 // 查看艺人详情
 function checkPersonDetail(artistId: number | undefined) {
   if (!artistId) {
     console.error('艺人id为空');
     return;
   }
-  router.push({ name: 'PersonDetail', params: { artistId } });
+  // 保存当前选角页面状态
+  saveCastingState();
+  router.push({ name: 'PersonDetail', params: { artistId }, query: { fromJob: 'pszb' } });
 }
 
 onMounted(() => {
+  // 优先恢复历史状态
+  restoreCastingState();
+  // 仍然拉取榜单（不影响已恢复的选角结果）
   queryLatestPersons();
   queryOldPersons();
 });
@@ -330,14 +391,14 @@ onMounted(() => {
               controls
               width="200"
               height="200"
-              @play="handlePlay(demo.artistId)"
+              @play="handlePlay(demo.artistId, demo.demoType)"
               @pause="handlePause(demo.artistId)"
               @ended="handleEnded(demo.artistId)"
               class="hidden"
               :ref="setAudioRef(demo.artistId)"
             ></audio>
             <button
-              @click="togglePlayByArtist(demo.artistId)"
+              @click="togglePlayByArtist(demo.artistId, demo.demoType)"
               class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-black shadow-md transition-all duration-300 hover:bg-gray-900"
             >
               <!-- 播放图标（三角形）点击后播放 -->
@@ -353,9 +414,8 @@ onMounted(() => {
               </div>
             </button>
             <Button
-              type="primary"
-              class="mt-1"
-              :disabled="!playedOnce[demo.artistId]"
+              :type="isNewArtist(demo.artistId)?'primary':'default'"
+              :class="(isNewArtist(demo.artistId)?'mt-1 bg-green-500 hover:bg-green-600 border-green-500':'mt-1') + (!playedOnce[`${demo.artistId}_${demo.demoType}`] ? ' pointer-events-none cursor-not-allowed' : '')"
               @click="checkPersonDetail(demo.artistId)"
             >
               详情

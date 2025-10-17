@@ -3,7 +3,7 @@ import { createJiti } from "../../../node_modules/.pnpm/jiti@2.5.1/node_modules/
 const jiti = createJiti(import.meta.url, {
   "interopDefault": true,
   "alias": {
-    "@vben/vite-config": "/Users/zhichao.zhang/huayin-person-manager/internal/vite-config"
+    "@vben/vite-config": "E:/GitHub/huayin-person-manager/internal/vite-config"
   },
   "transformOptions": {
     "babel": {
@@ -12,8 +12,8 @@ const jiti = createJiti(import.meta.url, {
   }
 })
 
-/** @type {import("/Users/zhichao.zhang/huayin-person-manager/internal/vite-config/src/index.js")} */
-const _module = await jiti.import("/Users/zhichao.zhang/huayin-person-manager/internal/vite-config/src/index.ts");
+/** @type {import("E:/GitHub/huayin-person-manager/internal/vite-config/src/index.js")} */
+const _module = await jiti.import("E:/GitHub/huayin-person-manager/internal/vite-config/src/index.ts");
 
 export const loadAndConvertEnv = _module.loadAndConvertEnv;
 export const defineConfig = _module.defineConfig;
